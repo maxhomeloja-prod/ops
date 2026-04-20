@@ -1363,24 +1363,6 @@ function getPreco(sku) {
   }
   return null;
 }
-  return null;
-}
-function getPreco(sku) {
-  // busca case-insensitive
-  if (PRECOS[sku]) return PRECOS[sku];
-  const upper = sku.toUpperCase();
-  const lower = sku.toLowerCase();
-  for (const k of Object.keys(PRECOS)) {
-    if (k.toUpperCase() === upper || k.toLowerCase() === lower) return PRECOS[k];
-  }
-  return null;
-}
-  return null;
-};
-
-function getPreco(sku) {
-  return PRECOS[sku] || null;
-}
 
 // ─── STATE ────────────────────────────────────────────────────────
 let allOPs = [];
