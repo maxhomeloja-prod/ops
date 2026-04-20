@@ -1198,8 +1198,8 @@ function buscarSKU() {
   const sku = document.getElementById('sku-busca').value.trim();
   if (!sku) return;
   const ops = allOPs.filter(o =>
-    o.sku === sku &&
-    o.responsavel === usuarioLogado &&
+    o.sku.toUpperCase() === sku.toUpperCase() &&
+    o.responsavel.toUpperCase() === usuarioLogado.toUpperCase() &&
     (o.quantidade - o.entregue) > 0
   );
   const container = document.getElementById('ops-result');
