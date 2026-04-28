@@ -1821,7 +1821,14 @@ function buscarSKU() {
   );
   const container = document.getElementById('ops-result');
   if (!ops.length) {
-    container.innerHTML = '<div class="vazio-msg">Nenhuma OP em aberto com esse SKU para você.</div>';
+    container.innerHTML = `<div class="op-result-card" id="card-sem-op" onclick="selecionarSemOP('${sku}')">
+      <div class="op-result-num" style="color:var(--orange)">S/OP</div>
+      <div class="op-result-info">
+        <div class="op-result-prod">Entrega sem Ordem de Produção</div>
+        <div class="op-result-sku">${sku}</div>
+      </div>
+      <div class="op-result-aberto" style="color:var(--gray)">Sem OP vinculada</div>
+    </div>`;
     document.getElementById('qtd-row').style.display = 'none';
     return;
   }
@@ -1851,6 +1858,25 @@ function selecionarOP(id) {
   document.getElementById('qtd-input').max = aberto;
 }
 
+function selecionarSemOP(sku) {
+  document.querySelectorAll('.op-result-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('card-sem-op');
+  if (card) card.classList.add('selected');
+  opSelecionada = {
+    id: null,
+    numero: 'S/OP',
+    produto: 'Entrega sem OP — ' + sku,
+    sku: sku,
+    quantidade: 99999,
+    entregue: 0,
+    semOP: true
+  };
+  document.getElementById('qtd-row').style.display = 'flex';
+  document.getElementById('qtd-input').value = '';
+  document.getElementById('qtd-input').removeAttribute('max');
+  document.getElementById('qtd-input').focus();
+}
+
 function limparBusca() {
   opSelecionada = null;
   document.getElementById('sku-busca').value = '';
@@ -1862,12 +1888,12 @@ function limparBusca() {
 function adicionarCarrinho() {
   if (!opSelecionada) return;
   const qtd = parseInt(document.getElementById('qtd-input').value);
-  const aberto = opSelecionada.quantidade - opSelecionada.entregue;
+  const aberto = opSelecionada.semOP ? 99999 : (opSelecionada.quantidade - opSelecionada.entregue);
   if (!qtd || qtd <= 0) { toast('Informe uma quantidade válida.', 'error'); return; }
-  if (qtd > aberto) { toast(`Máximo disponível: ${aberto} unidades.`, 'error'); return; }
+  if (!opSelecionada.semOP && qtd > aberto) { toast(`Máximo disponível: ${aberto} unidades.`, 'error'); return; }
   const preco = getPreco(opSelecionada.sku);
   // Verificar se já tem essa OP no carrinho
-  const existe = carrinho.find(i => i.opId === opSelecionada.id);
+  const existe = carrinho.find(i => i.opId === opSelecionada.id && !opSelecionada.semOP);
   if (existe) {
     existe.qtd += qtd;
   } else {
@@ -1878,7 +1904,8 @@ function adicionarCarrinho() {
       sku: opSelecionada.sku,
       qtd,
       preco,
-      aberto
+      aberto,
+      semOP: opSelecionada.semOP || false
     });
   }
   renderCarrinho();
@@ -1905,7 +1932,7 @@ function renderCarrinho() {
     if (sub) total += sub;
     return `<div class="carrinho-item">
       <div class="carrinho-item-info">
-        <div class="carrinho-item-prod">OP #${item.opNumero} — ${item.produto.substring(0,45)}${item.produto.length>45?'...':''}</div>
+        <div class="carrinho-item-prod">${item.semOP ? '<span style="color:var(--orange);font-weight:700">S/OP</span>' : 'OP #'+item.opNumero} — ${item.produto.substring(0,45)}${item.produto.length>45?'...':''}</div>
         <div class="carrinho-item-sku">${item.sku}</div>
       </div>
       <div class="carrinho-item-qtd">${item.qtd} un</div>
@@ -1925,7 +1952,7 @@ function abrirConfirmacao() {
     const sub = item.preco ? item.qtd * item.preco : 0;
     total += sub;
     return `<tr>
-      <td>#${item.opNumero}</td>
+      <td>${item.semOP ? '<span style="color:var(--orange);font-weight:700">S/OP</span>' : '#'+item.opNumero}</td>
       <td>${item.produto.substring(0,35)}${item.produto.length>35?'...':''}</td>
       <td style="font-family:monospace;font-size:11px">${item.sku}</td>
       <td>${item.qtd}</td>
@@ -1970,8 +1997,9 @@ async function confirmarEntrega() {
       })
     });
 
-    // 2. Atualizar OPs
+    // 2. Atualizar OPs (apenas itens com OP vinculada)
     for (const item of carrinho) {
+      if (item.semOP) continue; // Pular itens sem OP
       const op = allOPs.find(o => o.id === item.opId);
       if (!op) continue;
       const novaEntrega = op.entregue + item.qtd;
@@ -2037,7 +2065,7 @@ function gerarPDFEntrega(obs, total) {
         ${carrinho.map(item => {
           const sub = item.preco ? item.qtd * item.preco : 0;
           return `<tr style="border-bottom:1px solid #e5e7eb">
-            <td style="padding:10px 12px;font-weight:700;color:#4a8a7e">#${item.opNumero}</td>
+            <td style="padding:10px 12px;font-weight:700;color:${item.semOP?'#d97706':'#4a8a7e'}">${item.semOP?'S/OP':'#'+item.opNumero}</td>
             <td style="padding:10px 12px;font-size:13px">${item.produto}</td>
             <td style="padding:10px 12px;font-size:11px;font-family:monospace">${item.sku}</td>
             <td style="padding:10px 12px;text-align:right">${item.qtd}</td>
