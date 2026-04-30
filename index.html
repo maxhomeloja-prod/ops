@@ -2509,45 +2509,47 @@ function renderEntregaMobileSeNecessario() {
 function renderEntregaMobile() {
   const filtroResp = isMaster ? usuarioLogado : appUsuario;
   if (!filtroResp) return;
+  console.log('renderEntregaMobile — filtroResp:', filtroResp, '| allOPs:', allOPs.length);
   const ops = allOPs.filter(o =>
     o.responsavel === filtroResp &&
     ['Em producao', 'Finalizado parcial', 'Nao iniciado'].includes(o.situacao) &&
     (o.quantidade - o.entregue) > 0
   );
+  console.log('OPs filtradas:', ops.length, ops.map(o => o.numero + ' ' + o.situacao + ' resp:' + o.responsavel));
 
   const container = document.getElementById('ops-result');
+  if (!container) return;
   const searchBox = document.querySelector('.sku-search-box');
+  if (searchBox) searchBox.style.display = 'none';
 
-  if (true) { // Cards em todos os dispositivos
-    if (searchBox) searchBox.style.display = 'none';
-    // Agrupar por produto/SKU
-    let html = '<div style="margin-bottom:8px;font-size:13px;color:var(--gray);font-weight:500">' + ops.length + ' OP(s) em aberto</div>';
-    html += '<div class="ops-mobile-grid">';
-    ops.forEach(op => {
-      const aberto = op.quantidade - op.entregue;
-      html += `<div class="op-mobile-card" onclick="abrirQtdSheet('${op.id}')">
-        <div class="op-mobile-card-header">
-          <div class="op-mobile-num">#${op.numero}</div>
-          <div class="op-mobile-aberto">${aberto} em aberto</div>
-        </div>
-        <div class="op-mobile-produto">${op.produto}</div>
-        <div class="op-mobile-sku">${op.sku}</div>
-      </div>`;
-    });
-    // Card Sem OP
-    html += `<div class="op-mobile-card sem-op-card" onclick="abrirQtdSheetSemOP()">
-      <div class="op-mobile-card-header">
-        <div class="op-mobile-num sem-op">S/OP</div>
-      </div>
-      <div class="op-mobile-produto">Entrega sem Ordem de Produção</div>
-      <div class="op-mobile-sku">Digitar SKU manualmente</div>
-    </div>`;
-    html += '</div>';
-    container.innerHTML = html;
-    document.getElementById('qtd-row').style.display = 'none';
+  let html = '';
+  if (ops.length === 0) {
+    html += '<div style="padding:16px;text-align:center;color:var(--gray);font-size:14px">Nenhuma OP em aberto para você.</div>';
   } else {
-    if (searchBox) searchBox.style.display = 'block';
+    html += '<div style="margin-bottom:8px;font-size:13px;color:var(--gray);font-weight:500">' + ops.length + ' OP(s) em aberto</div>';
   }
+  html += '<div class="ops-mobile-grid">';
+  ops.forEach(op => {
+    const aberto = op.quantidade - op.entregue;
+    html += `<div class="op-mobile-card" onclick="abrirQtdSheet('${op.id}')">
+      <div class="op-mobile-card-header">
+        <div class="op-mobile-num">#${op.numero}</div>
+        <div class="op-mobile-aberto">${aberto} em aberto</div>
+      </div>
+      <div class="op-mobile-produto">${op.produto}</div>
+      <div class="op-mobile-sku">${op.sku}</div>
+    </div>`;
+  });
+  html += `<div class="op-mobile-card sem-op-card" onclick="abrirQtdSheetSemOP()">
+    <div class="op-mobile-card-header">
+      <div class="op-mobile-num sem-op">S/OP</div>
+    </div>
+    <div class="op-mobile-produto">Entrega sem Ordem de Produção</div>
+    <div class="op-mobile-sku">Digitar SKU manualmente</div>
+  </div>`;
+  html += '</div>';
+  container.innerHTML = html;
+  document.getElementById('qtd-row').style.display = 'none';
 }
 
 // ─── BOTTOM SHEET QTD ─────────────────────────────────────────────
