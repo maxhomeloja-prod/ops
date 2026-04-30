@@ -1677,7 +1677,7 @@ async function carregarResponsaveisLogin() {
     });
   } catch(e) { console.error('Erro ao carregar responsáveis:', e); }
 }
-carregarResponsaveisLogin();
+document.addEventListener('DOMContentLoaded', () => carregarResponsaveisLogin());
 
 function refreshOPs() {
   try { sessionStorage.removeItem(CACHE_KEY); } catch(e) {}
@@ -1792,10 +1792,11 @@ async function refreshOPsBackground() {
 
 // ─── STATS ────────────────────────────────────────────────────────
 function renderStats() {
-  const total = allOPs.length;
-  const emProd = allOPs.filter(o => o.situacao === 'Em producao').length;
-  const finParcial = allOPs.filter(o => o.situacao === 'Finalizado parcial').length;
-  const finalizado = allOPs.filter(o => o.situacao === 'Finalizado').length;
+  const ops = (isMaster || !appUsuario) ? allOPs : allOPs.filter(o => o.responsavel === appUsuario);
+  const total = ops.length;
+  const emProd = ops.filter(o => o.situacao === 'Em producao').length;
+  const finParcial = ops.filter(o => o.situacao === 'Finalizado parcial').length;
+  const finalizado = ops.filter(o => o.situacao === 'Finalizado').length;
   document.getElementById('stats-row').innerHTML = `
     <div class="stat-card"><div class="stat-label">Total de OPs</div><div class="stat-value">${total}</div></div>
     <div class="stat-card"><div class="stat-label">Em Produção</div><div class="stat-value" style="color:var(--blue)">${emProd}</div></div>
