@@ -1624,27 +1624,6 @@ let currentOP = null;
 document.getElementById('logo-img').src = LOGO_URL;
   document.getElementById('logo-login').src = LOGO_URL;
   document.getElementById('logo-app-login').src = LOGO_URL;
-// Carregar responsáveis para o select de login
-carregarResponsaveisLogin();
-
-async function carregarResponsaveisLogin() {
-  try {
-    const data = await notionQuery(null);
-    const resps = [...new Set(
-      (data.results || [])
-        .map(p => p.properties?.Responsavel?.rich_text?.[0]?.plain_text)
-        .filter(Boolean)
-    )].sort();
-    const sel = document.getElementById('app-login-nome');
-    resps.forEach(r => {
-      if (!Array.from(sel.options).find(o => o.value === r)) {
-        const opt = document.createElement('option');
-        opt.value = r; opt.textContent = r;
-        sel.appendChild(opt);
-      }
-    });
-  } catch(e) {}
-}
 
 // ─── NAVIGATION ───────────────────────────────────────────────────
 function showView(v) {
@@ -1679,6 +1658,26 @@ async function notionPatch(pageId, props) {
   invalidateCache();
   return res.json();
 }
+
+async function carregarResponsaveisLogin() {
+  try {
+    const data = await notionQuery(null);
+    const resps = [...new Set(
+      (data.results || [])
+        .map(p => p.properties?.Responsavel?.rich_text?.[0]?.plain_text)
+        .filter(Boolean)
+    )].sort();
+    const sel = document.getElementById('app-login-nome');
+    resps.forEach(r => {
+      if (!Array.from(sel.options).find(o => o.value === r)) {
+        const opt = document.createElement('option');
+        opt.value = r; opt.textContent = r;
+        sel.appendChild(opt);
+      }
+    });
+  } catch(e) { console.error('Erro ao carregar responsáveis:', e); }
+}
+carregarResponsaveisLogin();
 
 function refreshOPs() {
   try { sessionStorage.removeItem(CACHE_KEY); } catch(e) {}
