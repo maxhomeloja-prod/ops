@@ -762,10 +762,15 @@
     <img id="logo-img" src="" alt="Max Home">
     <div class="logo-text">Max<span>Home</span> <span style="color:var(--gray);font-weight:300;font-size:14px">| Ordens de Produção</span></div>
   </div>
-  <nav>
+  <nav id="main-nav" style="display:flex;align-items:center;gap:4px">
     <button class="nav-btn active" onclick="showView('ops')">📋 Ordens</button>
-    <button class="nav-btn" onclick="showView('entregas')">📦 Entregas</button>
-    <button class="nav-btn" onclick="showView('registrar')">✏️ Registrar Entrega</button>
+    <button class="nav-btn" onclick="showView('registrar')">✏️ Entregas</button>
+    <button class="nav-btn" onclick="refreshOPs()" title="Atualizar" style="padding:8px 10px">🔄</button>
+    <div id="header-user" style="display:none;align-items:center;gap:8px;margin-left:8px">
+      <div class="header-avatar" id="header-avatar">?</div>
+      <span class="header-username" id="header-username" style="font-size:13px;font-weight:600"></span>
+      <button class="header-logout" onclick="appLogout()">Sair</button>
+    </div>
   </nav>
 </header>
 
@@ -813,18 +818,7 @@
   </div>
 
   <!-- VIEW: ENTREGAS -->
-  <div class="view" id="view-entregas">
-    <div class="filters">
-      <select class="filter-select" id="filter-resp-entrega" onchange="renderEntregas()">
-        <option value="">Selecione um responsável</option>
-      </select>
-    </div>
-    <div class="loading" id="ent-loading" style="display:none">
-      <div class="spinner"></div>
-    </div>
-    <div class="resp-cards" id="entregas-container"></div>
-    <div class="empty" id="ent-empty" style="display:none">Selecione um responsável para ver as OPs em aberto.</div>
-  </div>
+<!-- view-entregas removida -->
 
   <!-- VIEW: REGISTRAR ENTREGA -->
   <div class="view" id="view-registrar">
@@ -1629,7 +1623,8 @@ let currentOP = null;
 // ─── INIT ─────────────────────────────────────────────────────────
 document.getElementById('logo-img').src = LOGO_URL;
   document.getElementById('logo-login').src = LOGO_URL;
-loadOPs();
+  document.getElementById('logo-app-login').src = LOGO_URL;
+// OPs carregam após login
 
 // ─── NAVIGATION ───────────────────────────────────────────────────
 function showView(v) {
