@@ -8,7 +8,7 @@
       <option value="">Selecione seu nome...</option>
       <option value="MAXHOME">MAXHOME (Administrador)</option>
     </select>
-    <input type="password" class="app-login-input" id="app-login-senha" placeholder="Senha" maxlength="10">
+    <input type="password" class="app-login-input" id="app-login-senha" placeholder="Senha" maxlength="10" onkeydown="if(event.key==='Enter')appLogin()">
     <div class="app-login-error" id="app-login-error">Usuário ou senha incorretos.</div>
     <button class="btn btn-primary app-login-btn" onclick="appLogin()">Entrar</button>
   </div>
@@ -832,7 +832,7 @@
         <select class="login-select" id="login-nome">
           <option value="">Selecione seu nome...</option>
         </select>
-        <input type="password" class="login-input" id="login-senha" placeholder="Senha" maxlength="10">
+        <input type="password" class="login-input" id="login-senha" placeholder="Senha" maxlength="10" onkeydown="if(event.key==='Enter')fazerLogin()">
         <div class="login-error" id="login-error">Senha incorreta. Tente novamente.</div>
         <button class="btn btn-primary btn-login" onclick="fazerLogin()">Entrar</button>
       </div>
