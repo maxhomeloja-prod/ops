@@ -530,6 +530,159 @@
   .sem-preco { color: var(--orange); font-size: 12px; font-style: italic; }
   .vazio-msg { text-align: center; padding: 30px; color: var(--gray); font-size: 14px; }
 
+
+  /* ─── MOBILE RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    /* Header */
+    header { padding: 0 12px; height: 56px; }
+    .logo-text { font-size: 14px; }
+    .logo-area img { height: 36px; }
+    nav { gap: 2px; }
+    .nav-btn { padding: 6px 8px; font-size: 12px; }
+
+    /* Main */
+    main { padding: 12px; }
+
+    /* Stats */
+    .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+    .stat-card { padding: 12px 14px; }
+    .stat-value { font-size: 22px; }
+
+    /* Filters */
+    .filters { gap: 8px; }
+    .filter-select, .filter-input { font-size: 14px; padding: 10px 10px; }
+
+    /* Table — virar cards no mobile */
+    .table-wrap { border-radius: 10px; }
+    table thead { display: none; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    tbody tr {
+      border-bottom: 2px solid var(--border);
+      padding: 12px;
+      position: relative;
+    }
+    tbody tr td { padding: 2px 0; border: none; font-size: 13px; }
+    tbody tr td:first-child { font-size: 16px; margin-bottom: 4px; }
+    tbody tr td:nth-child(4) { display: inline-block; margin-right: 8px; }
+    tbody tr td:nth-child(6) { position: absolute; top: 12px; right: 12px; }
+    tbody tr td:nth-child(7) { font-size: 11px; color: var(--gray); margin-top: 4px; }
+    .progress-wrap { margin-top: 4px; }
+
+    /* Modal */
+    .modal { border-radius: 14px 14px 0 0; max-height: 95vh; position: fixed; bottom: 0; left: 0; right: 0; margin: 0; }
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal-header { padding: 16px 20px 12px; }
+    .modal-body { padding: 16px 20px; }
+    .detail-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal-footer { padding: 12px 20px 20px; }
+
+    /* Print frame */
+    #print-frame { overflow-y: auto; }
+    .print-close-btn { top: 8px; right: 8px; }
+  }
+
+  /* ─── ENTREGA MOBILE ─── */
+  @media (max-width: 768px) {
+    .entrega-wrap { max-width: 100%; }
+    .login-box { margin: 20px auto; padding: 24px 20px; border-radius: 14px; }
+    .login-box img { height: 64px; }
+    .login-box h2 { font-size: 18px; }
+
+    /* OPs grid no mobile */
+    .ops-mobile-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .op-mobile-card {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--teal);
+      cursor: pointer;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .op-mobile-card:active { transform: scale(0.98); background: var(--teal-light); }
+    .op-mobile-card.sem-op-card { border-left-color: var(--orange); }
+    .op-mobile-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .op-mobile-num { font-size: 18px; font-weight: 700; color: var(--teal-dark); }
+    .op-mobile-num.sem-op { color: var(--orange); }
+    .op-mobile-aberto { font-size: 14px; font-weight: 700; color: var(--orange); background: #fff7ed; padding: 4px 10px; border-radius: 20px; }
+    .op-mobile-produto { font-size: 13px; font-weight: 500; color: var(--charcoal); margin-bottom: 4px; }
+    .op-mobile-sku { font-size: 11px; color: var(--gray); font-family: monospace; }
+
+    /* Bottom sheet para qtd */
+    .qtd-sheet {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 400;
+      background: var(--white); border-radius: 20px 20px 0 0;
+      padding: 20px 20px 32px;
+      box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .qtd-sheet.open { transform: translateY(0); }
+    .qtd-sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+    .qtd-sheet-produto { font-size: 14px; font-weight: 600; color: var(--charcoal); margin-bottom: 4px; }
+    .qtd-sheet-info { font-size: 12px; color: var(--gray); margin-bottom: 16px; }
+    .qtd-sheet-input {
+      width: 100%; padding: 16px; font-size: 28px; font-weight: 700;
+      text-align: center; border: 2px solid var(--teal); border-radius: 12px;
+      font-family: 'DM Sans', sans-serif; outline: none; margin-bottom: 12px;
+      -webkit-appearance: none;
+    }
+    .qtd-sheet-btn { width: 100%; padding: 16px; font-size: 16px; border-radius: 12px; }
+    .qtd-sheet-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 399;
+      display: none;
+    }
+    .qtd-sheet-overlay.open { display: block; }
+
+    /* Carrinho flutuante */
+    .carrinho-fab {
+      position: fixed; bottom: 20px; right: 16px; z-index: 350;
+      background: var(--teal); color: white;
+      border: none; border-radius: 28px;
+      padding: 14px 20px; font-size: 15px; font-weight: 700;
+      font-family: 'DM Sans', sans-serif;
+      box-shadow: 0 4px 16px rgba(74,138,126,0.4);
+      cursor: pointer; display: none;
+      align-items: center; gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .carrinho-fab.visible { display: flex; }
+    .carrinho-fab-count {
+      background: white; color: var(--teal-dark);
+      border-radius: 12px; padding: 2px 8px; font-size: 13px; font-weight: 700;
+    }
+
+    /* Carrinho sheet */
+    .carrinho-sheet {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 410;
+      background: var(--white); border-radius: 20px 20px 0 0;
+      padding: 0 0 32px;
+      box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+      max-height: 80vh; overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+    }
+    .carrinho-sheet.open { transform: translateY(0); }
+    .carrinho-sheet-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: white; z-index: 1; border-radius: 20px 20px 0 0; }
+    .carrinho-sheet-title { font-size: 17px; font-weight: 700; }
+    .carrinho-sheet-items { padding: 8px 20px; }
+    .carrinho-sheet-footer { padding: 12px 20px 0; }
+
+    /* Seção de busca SKU mobile — simplificada */
+    .sku-search-box { display: none; }
+    .entrega-header { border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
+    .user-avatar { width: 36px; height: 36px; font-size: 14px; }
+    .user-name { font-size: 14px; }
+
+    /* Esconder aba de entregas table no mobile */
+    .resp-cards { grid-template-columns: 1fr; }
+  }
+
 </style>
 </head>
 <body>
@@ -695,6 +848,41 @@
         <button class="btn btn-primary" onclick="confirmarEntrega()">Confirmar e Gerar PDF</button>
         <button class="btn btn-outline" onclick="fecharConfirmacao()">Voltar</button>
       </div>
+    </div>
+  </div>
+
+
+  <!-- BOTTOM SHEET: QUANTIDADE -->
+  <div class="qtd-sheet-overlay" id="qtd-overlay" onclick="fecharQtdSheet()"></div>
+  <div class="qtd-sheet" id="qtd-sheet">
+    <div class="qtd-sheet-handle"></div>
+    <div class="qtd-sheet-produto" id="qtd-sheet-produto">—</div>
+    <div class="qtd-sheet-info" id="qtd-sheet-info">—</div>
+    <input type="number" class="qtd-sheet-input" id="qtd-sheet-input" placeholder="0" min="1" inputmode="numeric">
+    <button class="btn btn-primary qtd-sheet-btn" onclick="confirmarQtdSheet()">Adicionar ao Carrinho</button>
+  </div>
+
+  <!-- FAB CARRINHO -->
+  <button class="carrinho-fab" id="carrinho-fab" onclick="abrirCarrinhoSheet()">
+    🛒 Ver Carrinho <span class="carrinho-fab-count" id="fab-count">0</span>
+  </button>
+
+  <!-- CARRINHO SHEET -->
+  <div class="qtd-sheet-overlay" id="carrinho-overlay" onclick="fecharCarrinhoSheet()" style="z-index:409"></div>
+  <div class="carrinho-sheet" id="carrinho-sheet">
+    <div class="carrinho-sheet-header">
+      <div class="qtd-sheet-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="carrinho-sheet-title">🛒 Carrinho</div>
+        <button class="modal-close" onclick="fecharCarrinhoSheet()">✕</button>
+      </div>
+    </div>
+    <div class="carrinho-sheet-items" id="carrinho-sheet-items"></div>
+    <div class="carrinho-sheet-footer">
+      <div class="carrinho-total" style="margin-bottom:12px">
+        Total: <span id="carrinho-sheet-total" style="margin-left:12px;color:var(--teal-dark)">R$ 0,00</span>
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:16px;font-size:16px;border-radius:12px" onclick="fecharCarrinhoSheet();abrirConfirmacao()">Finalizar Entrega</button>
     </div>
   </div>
 
@@ -1796,6 +1984,7 @@ function fazerLogin() {
   document.getElementById('entrega-interface').style.display = 'block';
   document.getElementById('user-nome-display').textContent = nome;
   document.getElementById('user-avatar').textContent = nome.charAt(0).toUpperCase();
+  renderEntregaMobile();
 }
 
 function fazerLogout() {
@@ -2092,6 +2281,160 @@ function gerarPDFEntrega(obs, total) {
   document.getElementById('print-frame').style.display = 'block';
   setTimeout(() => window.print(), 300);
 }
+
+
+// ─── MOBILE DETECTION ─────────────────────────────────────────────
+function isMobile() { return window.innerWidth <= 768; }
+
+// ─── RENDER OPs MOBILE (cards sem digitar SKU) ────────────────────
+function renderEntregaMobile() {
+  if (!usuarioLogado) return;
+  const ops = allOPs.filter(o =>
+    o.responsavel === usuarioLogado &&
+    ['Em producao', 'Finalizado parcial', 'Nao iniciado'].includes(o.situacao) &&
+    (o.quantidade - o.entregue) > 0
+  );
+
+  const container = document.getElementById('ops-result');
+  const searchBox = document.querySelector('.sku-search-box');
+
+  if (isMobile()) {
+    if (searchBox) searchBox.style.display = 'none';
+    // Agrupar por produto/SKU
+    let html = '<div style="margin-bottom:8px;font-size:13px;color:var(--gray);font-weight:500">' + ops.length + ' OP(s) em aberto</div>';
+    html += '<div class="ops-mobile-grid">';
+    ops.forEach(op => {
+      const aberto = op.quantidade - op.entregue;
+      html += `<div class="op-mobile-card" onclick="abrirQtdSheet('${op.id}')">
+        <div class="op-mobile-card-header">
+          <div class="op-mobile-num">#${op.numero}</div>
+          <div class="op-mobile-aberto">${aberto} em aberto</div>
+        </div>
+        <div class="op-mobile-produto">${op.produto}</div>
+        <div class="op-mobile-sku">${op.sku}</div>
+      </div>`;
+    });
+    // Card Sem OP
+    html += `<div class="op-mobile-card sem-op-card" onclick="abrirQtdSheetSemOP()">
+      <div class="op-mobile-card-header">
+        <div class="op-mobile-num sem-op">S/OP</div>
+      </div>
+      <div class="op-mobile-produto">Entrega sem Ordem de Produção</div>
+      <div class="op-mobile-sku">Digitar SKU manualmente</div>
+    </div>`;
+    html += '</div>';
+    container.innerHTML = html;
+    document.getElementById('qtd-row').style.display = 'none';
+  } else {
+    if (searchBox) searchBox.style.display = 'block';
+  }
+}
+
+// ─── BOTTOM SHEET QTD ─────────────────────────────────────────────
+function abrirQtdSheet(opId) {
+  const op = allOPs.find(o => o.id === opId);
+  if (!op) return;
+  opSelecionada = op;
+  const aberto = op.quantidade - op.entregue;
+  document.getElementById('qtd-sheet-produto').textContent = op.produto;
+  document.getElementById('qtd-sheet-info').textContent = `SKU: ${op.sku} · ${aberto} em aberto`;
+  document.getElementById('qtd-sheet-input').value = '';
+  document.getElementById('qtd-sheet-input').max = aberto;
+  document.getElementById('qtd-overlay').classList.add('open');
+  document.getElementById('qtd-sheet').classList.add('open');
+  setTimeout(() => document.getElementById('qtd-sheet-input').focus(), 300);
+}
+
+function abrirQtdSheetSemOP() {
+  const sku = prompt('Digite o SKU:');
+  if (!sku) return;
+  opSelecionada = {
+    id: null, numero: 'S/OP',
+    produto: 'Entrega sem OP — ' + sku.toUpperCase(),
+    sku: sku.toUpperCase(), quantidade: 99999, entregue: 0, semOP: true
+  };
+  document.getElementById('qtd-sheet-produto').textContent = opSelecionada.produto;
+  document.getElementById('qtd-sheet-info').textContent = `SKU: ${sku.toUpperCase()} · Sem OP vinculada`;
+  document.getElementById('qtd-sheet-input').value = '';
+  document.getElementById('qtd-sheet-input').removeAttribute('max');
+  document.getElementById('qtd-overlay').classList.add('open');
+  document.getElementById('qtd-sheet').classList.add('open');
+  setTimeout(() => document.getElementById('qtd-sheet-input').focus(), 300);
+}
+
+function fecharQtdSheet() {
+  document.getElementById('qtd-overlay').classList.remove('open');
+  document.getElementById('qtd-sheet').classList.remove('open');
+  opSelecionada = null;
+}
+
+function confirmarQtdSheet() {
+  const qtd = parseInt(document.getElementById('qtd-sheet-input').value);
+  if (!qtd || qtd <= 0) { toast('Informe uma quantidade válida.', 'error'); return; }
+  const aberto = opSelecionada.semOP ? 99999 : (opSelecionada.quantidade - opSelecionada.entregue);
+  if (!opSelecionada.semOP && qtd > aberto) { toast(`Máximo: ${aberto} unidades.`, 'error'); return; }
+  const preco = getPreco(opSelecionada.sku);
+  const existe = carrinho.find(i => i.opId === opSelecionada.id && !opSelecionada.semOP);
+  if (existe) { existe.qtd += qtd; }
+  else {
+    carrinho.push({
+      opId: opSelecionada.id, opNumero: opSelecionada.numero,
+      produto: opSelecionada.produto, sku: opSelecionada.sku,
+      qtd, preco, aberto, semOP: opSelecionada.semOP || false
+    });
+  }
+  fecharQtdSheet();
+  renderCarrinho();
+  atualizarFAB();
+  toast(`✓ Adicionado ao carrinho!`, 'success');
+}
+
+// ─── FAB E CARRINHO SHEET ─────────────────────────────────────────
+function atualizarFAB() {
+  const fab = document.getElementById('carrinho-fab');
+  const count = document.getElementById('fab-count');
+  if (carrinho.length > 0 && isMobile()) {
+    fab.classList.add('visible');
+    count.textContent = carrinho.length;
+  } else {
+    fab.classList.remove('visible');
+  }
+}
+
+function abrirCarrinhoSheet() {
+  // Renderizar itens no sheet
+  const itemsEl = document.getElementById('carrinho-sheet-items');
+  const totalEl = document.getElementById('carrinho-sheet-total');
+  let total = 0;
+  itemsEl.innerHTML = carrinho.map((item, i) => {
+    const sub = item.preco ? item.qtd * item.preco : 0;
+    total += sub;
+    return `<div class="carrinho-item">
+      <div class="carrinho-item-info">
+        <div class="carrinho-item-prod">${item.semOP ? '<span style="color:var(--orange);font-weight:700">S/OP</span>' : 'OP #'+item.opNumero} — ${item.produto.substring(0,40)}</div>
+        <div class="carrinho-item-sku">${item.sku}</div>
+      </div>
+      <div class="carrinho-item-qtd">${item.qtd} un</div>
+      <div class="carrinho-item-valor">${sub ? 'R$ '+sub.toFixed(2).replace('.',',') : '—'}</div>
+      <button class="btn-remove" onclick="removerCarrinho(${i});abrirCarrinhoSheet()">✕</button>
+    </div>`;
+  }).join('');
+  totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+  document.getElementById('carrinho-overlay').classList.add('open');
+  document.getElementById('carrinho-sheet').classList.add('open');
+}
+
+function fecharCarrinhoSheet() {
+  document.getElementById('carrinho-overlay').classList.remove('open');
+  document.getElementById('carrinho-sheet').classList.remove('open');
+}
+
+// Sobrescrever renderCarrinho para atualizar FAB também
+const _origRenderCarrinho = renderCarrinho;
+renderCarrinho = function() {
+  _origRenderCarrinho();
+  atualizarFAB();
+};
 
 // Fechar modal ao clicar fora
 document.getElementById('op-modal').addEventListener('click', function(e) {
