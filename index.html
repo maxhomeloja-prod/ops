@@ -1,3 +1,18 @@
+
+<div id="app-login">
+  <div class="app-login-box">
+    <img id="logo-app-login" src="" alt="Max Home">
+    <h1>Max Home</h1>
+    <p>Controle de Produção</p>
+    <select class="app-login-select" id="app-login-nome">
+      <option value="">Selecione seu nome...</option>
+      <option value="MAXHOME">MAXHOME (Administrador)</option>
+    </select>
+    <input type="password" class="app-login-input" id="app-login-senha" placeholder="Senha" maxlength="10">
+    <div class="app-login-error" id="app-login-error">Usuário ou senha incorretos.</div>
+    <button class="btn btn-primary app-login-btn" onclick="appLogin()">Entrar</button>
+  </div>
+</div>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -531,6 +546,141 @@
   .vazio-msg { text-align: center; padding: 30px; color: var(--gray); font-size: 14px; }
 
 
+
+
+  /* ─── LOGIN GLOBAL ─── */
+  #app-login {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--light);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #app-login.hidden { display: none; }
+  .app-login-box {
+    background: var(--white); border-radius: 20px;
+    padding: 40px 36px; width: 100%; max-width: 400px;
+    box-shadow: var(--shadow-lg); text-align: center;
+  }
+  .app-login-box img { height: 90px; margin-bottom: 20px; }
+  .app-login-box h1 { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--charcoal); margin-bottom: 4px; }
+  .app-login-box p { font-size: 13px; color: var(--gray); margin-bottom: 28px; }
+  .app-login-select, .app-login-input {
+    width: 100%; padding: 13px 16px;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px;
+    color: var(--charcoal); background: var(--white);
+    outline: none; margin-bottom: 12px;
+    transition: border-color 0.15s; box-sizing: border-box;
+  }
+  .app-login-select:focus, .app-login-input:focus { border-color: var(--teal); }
+  .app-login-btn { width: 100%; padding: 14px; font-size: 16px; border-radius: 10px; margin-top: 4px; }
+  .app-login-error { color: var(--red); font-size: 13px; margin-bottom: 10px; display: none; }
+
+  /* Ocultar nav Entregas */
+  #nav-entregas { display: none; }
+
+  /* Usuário logado no header */
+  .header-user {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .header-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--teal); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; flex-shrink: 0;
+  }
+  .header-username { font-size: 13px; font-weight: 600; color: var(--charcoal); }
+  .header-logout {
+    padding: 6px 12px; border: 1.5px solid var(--border);
+    border-radius: 8px; background: transparent;
+    font-family: 'DM Sans', sans-serif; font-size: 12px;
+    color: var(--gray); cursor: pointer;
+  }
+  .header-logout:hover { background: var(--light); }
+
+  /* ─── ENTREGA CARDS — TODOS OS DISPOSITIVOS ─── */
+  .ops-mobile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .op-mobile-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--teal);
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .op-mobile-card:hover { background: var(--teal-light); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .op-mobile-card:active { transform: scale(0.98); }
+  .op-mobile-card.sem-op-card { border-left-color: var(--orange); }
+  .op-mobile-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .op-mobile-num { font-size: 18px; font-weight: 700; color: var(--teal-dark); }
+  .op-mobile-num.sem-op { color: var(--orange); }
+  .op-mobile-aberto { font-size: 13px; font-weight: 700; color: var(--orange); background: #fff7ed; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+  .op-mobile-produto { font-size: 13px; font-weight: 500; color: var(--charcoal); margin-bottom: 4px; line-height: 1.4; }
+  .op-mobile-sku { font-size: 11px; color: var(--gray); font-family: monospace; }
+
+  /* Bottom sheet funciona em todos */
+  .qtd-sheet-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 399; }
+  .qtd-sheet-overlay.open { display: block; }
+  .qtd-sheet {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+    width: 100%; max-width: 520px;
+    z-index: 400; background: var(--white);
+    border-radius: 20px 20px 0 0; padding: 20px 24px 32px;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .qtd-sheet.open { transform: translateX(-50%) translateY(0); }
+  .qtd-sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+  .qtd-sheet-produto { font-size: 15px; font-weight: 600; color: var(--charcoal); margin-bottom: 4px; }
+  .qtd-sheet-info { font-size: 12px; color: var(--gray); margin-bottom: 16px; }
+  .qtd-sheet-input {
+    width: 100%; padding: 16px; font-size: 28px; font-weight: 700;
+    text-align: center; border: 2px solid var(--teal); border-radius: 12px;
+    font-family: 'DM Sans', sans-serif; outline: none; margin-bottom: 12px;
+    -webkit-appearance: none; box-sizing: border-box;
+  }
+  .qtd-sheet-btn { width: 100%; padding: 16px; font-size: 16px; border-radius: 12px; }
+
+  /* FAB */
+  .carrinho-fab {
+    position: fixed; bottom: 24px; right: 24px; z-index: 350;
+    background: var(--teal); color: white;
+    border: none; border-radius: 28px;
+    padding: 14px 22px; font-size: 15px; font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    box-shadow: 0 4px 16px rgba(74,138,126,0.4);
+    cursor: pointer; display: none;
+    align-items: center; gap: 8px;
+  }
+  .carrinho-fab.visible { display: flex; }
+  .carrinho-fab-count {
+    background: white; color: var(--teal-dark);
+    border-radius: 12px; padding: 2px 8px; font-size: 13px; font-weight: 700;
+  }
+
+  /* Carrinho sheet desktop */
+  .carrinho-sheet {
+    position: fixed; bottom: 0; left: 50%; 
+    transform: translateX(-50%) translateY(100%);
+    width: 100%; max-width: 560px;
+    z-index: 410; background: var(--white);
+    border-radius: 20px 20px 0 0; padding: 0 0 32px;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+    max-height: 80vh; overflow-y: auto;
+    transition: transform 0.3s ease;
+  }
+  .carrinho-sheet.open { transform: translateX(-50%) translateY(0); }
+  .carrinho-sheet-header { padding: 16px 24px 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: white; z-index: 1; border-radius: 20px 20px 0 0; }
+  .carrinho-sheet-title { font-size: 17px; font-weight: 700; }
+  .carrinho-sheet-items { padding: 8px 24px; }
+  .carrinho-sheet-footer { padding: 12px 24px 0; }
+
   /* ─── MOBILE RESPONSIVE ─── */
   @media (max-width: 768px) {
     /* Header */
@@ -588,93 +738,13 @@
     .login-box img { height: 64px; }
     .login-box h2 { font-size: 18px; }
 
-    /* OPs grid no mobile */
-    .ops-mobile-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-    .op-mobile-card {
-      background: var(--white);
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow: var(--shadow);
-      border-left: 4px solid var(--teal);
-      cursor: pointer;
-      transition: all 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .op-mobile-card:active { transform: scale(0.98); background: var(--teal-light); }
-    .op-mobile-card.sem-op-card { border-left-color: var(--orange); }
-    .op-mobile-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-    .op-mobile-num { font-size: 18px; font-weight: 700; color: var(--teal-dark); }
-    .op-mobile-num.sem-op { color: var(--orange); }
-    .op-mobile-aberto { font-size: 14px; font-weight: 700; color: var(--orange); background: #fff7ed; padding: 4px 10px; border-radius: 20px; }
-    .op-mobile-produto { font-size: 13px; font-weight: 500; color: var(--charcoal); margin-bottom: 4px; }
-    .op-mobile-sku { font-size: 11px; color: var(--gray); font-family: monospace; }
-
-    /* Bottom sheet para qtd */
-    .qtd-sheet {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 400;
-      background: var(--white); border-radius: 20px 20px 0 0;
-      padding: 20px 20px 32px;
-      box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .qtd-sheet.open { transform: translateY(0); }
-    .qtd-sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
-    .qtd-sheet-produto { font-size: 14px; font-weight: 600; color: var(--charcoal); margin-bottom: 4px; }
-    .qtd-sheet-info { font-size: 12px; color: var(--gray); margin-bottom: 16px; }
-    .qtd-sheet-input {
-      width: 100%; padding: 16px; font-size: 28px; font-weight: 700;
-      text-align: center; border: 2px solid var(--teal); border-radius: 12px;
-      font-family: 'DM Sans', sans-serif; outline: none; margin-bottom: 12px;
-      -webkit-appearance: none;
-    }
-    .qtd-sheet-btn { width: 100%; padding: 16px; font-size: 16px; border-radius: 12px; }
-    .qtd-sheet-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 399;
-      display: none;
-    }
-    .qtd-sheet-overlay.open { display: block; }
-
-    /* Carrinho flutuante */
-    .carrinho-fab {
-      position: fixed; bottom: 20px; right: 16px; z-index: 350;
-      background: var(--teal); color: white;
-      border: none; border-radius: 28px;
-      padding: 14px 20px; font-size: 15px; font-weight: 700;
-      font-family: 'DM Sans', sans-serif;
-      box-shadow: 0 4px 16px rgba(74,138,126,0.4);
-      cursor: pointer; display: none;
-      align-items: center; gap: 8px;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .carrinho-fab.visible { display: flex; }
-    .carrinho-fab-count {
-      background: white; color: var(--teal-dark);
-      border-radius: 12px; padding: 2px 8px; font-size: 13px; font-weight: 700;
-    }
-
-    /* Carrinho sheet */
-    .carrinho-sheet {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 410;
-      background: var(--white); border-radius: 20px 20px 0 0;
-      padding: 0 0 32px;
-      box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
-      max-height: 80vh; overflow-y: auto;
-      transform: translateY(100%);
-      transition: transform 0.3s ease;
-    }
-    .carrinho-sheet.open { transform: translateY(0); }
-    .carrinho-sheet-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: white; z-index: 1; border-radius: 20px 20px 0 0; }
-    .carrinho-sheet-title { font-size: 17px; font-weight: 700; }
-    .carrinho-sheet-items { padding: 8px 20px; }
-    .carrinho-sheet-footer { padding: 12px 20px 0; }
-
-    /* Seção de busca SKU mobile — simplificada */
+    /* Mobile — grid de 1 coluna */
+    .ops-mobile-grid { grid-template-columns: 1fr; }
     .sku-search-box { display: none; }
+    .qtd-sheet { left: 0; right: 0; transform: translateY(100%); max-width: 100%; }
+    .qtd-sheet.open { transform: translateY(0); }
+    .carrinho-sheet { left: 0; right: 0; transform: translateY(100%); max-width: 100%; }
+    .carrinho-sheet.open { transform: translateY(0); }
     .entrega-header { border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
     .user-avatar { width: 36px; height: 36px; font-size: 14px; }
     .user-name { font-size: 14px; }
@@ -1567,8 +1637,10 @@ function showView(v) {
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('view-' + v).classList.add('active');
   event.target.classList.add('active');
-  if (v === 'entregas') renderEntregas();
-  if (v === 'registrar' && allOPs.length) popularLoginOps();
+  if (v === 'registrar') {
+    showViewEntregas();
+    if (allOPs.length) popularLoginOps();
+  }
 }
 
 // ─── NOTION API ───────────────────────────────────────────────────
@@ -1720,6 +1792,18 @@ function renderStats() {
 // ─── POPULATE FILTERS ─────────────────────────────────────────────
 function populateFilters() {
   const resps = [...new Set(allOPs.map(o => o.responsavel).filter(Boolean))].sort();
+  // Atualizar select do login global
+  const appSel = document.getElementById('app-login-nome');
+  if (appSel) {
+    const existingVals = Array.from(appSel.options).map(o => o.value);
+    resps.forEach(r => {
+      if (!existingVals.includes(r)) {
+        const opt = document.createElement('option');
+        opt.value = r; opt.textContent = r;
+        appSel.appendChild(opt);
+      }
+    });
+  }
   ['filter-responsavel', 'filter-resp-entrega'].forEach(id => {
     const sel = document.getElementById(id);
     const first = sel.options[0];
@@ -1740,6 +1824,7 @@ function renderOPs() {
   const busca = document.getElementById('filter-busca').value.toLowerCase();
 
   let ops = allOPs.filter(o => {
+    if (!isMaster && appUsuario && o.responsavel !== appUsuario) return false;
     if (sitFilt && o.situacao !== sitFilt) return false;
     if (respFilt && o.responsavel !== respFilt) return false;
     if (busca && !o.produto.toLowerCase().includes(busca) && !o.sku.toLowerCase().includes(busca)) return false;
@@ -1960,6 +2045,103 @@ const SENHA_CORRETA = '1234';
 let usuarioLogado = null;
 let opSelecionada = null;
 let carrinho = [];
+
+
+// ─── APP STATE ────────────────────────────────────────────────────
+let appUsuario = null; // null = não logado
+let isMaster = false;
+
+// ─── APP LOGIN ────────────────────────────────────────────────────
+const SENHAS = { 'MAXHOME': '0320' };
+const SENHA_OPERADOR = '1234';
+
+function appLogin() {
+  const nome = document.getElementById('app-login-nome').value;
+  const senha = document.getElementById('app-login-senha').value;
+  const err = document.getElementById('app-login-error');
+
+  if (!nome) { err.textContent = 'Selecione seu nome.'; err.style.display = 'block'; return; }
+
+  const senhaCorreta = nome === 'MAXHOME' ? SENHAS['MAXHOME'] : SENHA_OPERADOR;
+  if (senha !== senhaCorreta) { err.style.display = 'block'; return; }
+
+  err.style.display = 'none';
+  appUsuario = nome;
+  isMaster = nome === 'MAXHOME';
+
+  // Ocultar login
+  document.getElementById('app-login').classList.add('hidden');
+
+  // Atualizar header
+  document.getElementById('header-user').style.display = 'flex';
+  document.getElementById('header-avatar').textContent = nome.charAt(0).toUpperCase();
+  document.getElementById('header-username').textContent = nome;
+
+  // Filtrar responsável se não for master
+  if (!isMaster) {
+    // Pré-filtrar o filtro de responsável nas Ordens
+    const filtro = document.getElementById('filter-responsavel');
+    if (filtro) {
+      // Aguardar OPs carregarem
+      const interval = setInterval(() => {
+        const opt = Array.from(filtro.options).find(o => o.value === appUsuario);
+        if (opt) {
+          filtro.value = appUsuario;
+          renderOPs();
+          clearInterval(interval);
+        }
+      }, 200);
+    }
+    // Definir usuário logado para a aba de entregas
+    usuarioLogado = appUsuario;
+  }
+
+
+  // Mostrar/ocultar filtro de responsável
+  const filtroResp = document.getElementById('filter-responsavel');
+  if (filtroResp) filtroResp.style.display = isMaster ? '' : 'none';
+  // Carregar OPs
+  loadOPs();
+}
+
+function appLogout() {
+  appUsuario = null; isMaster = false; usuarioLogado = null;
+  carrinho = []; allOPs = [];
+  document.getElementById('app-login').classList.remove('hidden');
+  document.getElementById('header-user').style.display = 'none';
+  document.getElementById('app-login-nome').value = '';
+  document.getElementById('app-login-senha').value = '';
+  // Resetar views
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-ops').classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.nav-btn').classList.add('active');
+  // Limpar tabela
+  document.getElementById('ops-loading').style.display = 'block';
+  document.getElementById('ops-table').style.display = 'none';
+  document.getElementById('ops-tbody').innerHTML = '';
+  document.getElementById('stats-row').innerHTML = '';
+  // Resetar entrega
+  document.getElementById('entrega-login').style.display = 'block';
+  document.getElementById('entrega-interface').style.display = 'none';
+  atualizarFAB();
+}
+
+// Quando abre aba de entregas — se já logado como operador, pular login interno
+function showViewEntregas() {
+  if (!isMaster && usuarioLogado) {
+    // Já logado como operador — mostrar interface direto
+    document.getElementById('entrega-login').style.display = 'none';
+    document.getElementById('entrega-interface').style.display = 'block';
+    document.getElementById('user-nome-display').textContent = appUsuario;
+    document.getElementById('user-avatar').textContent = appUsuario.charAt(0).toUpperCase();
+    renderEntregaMobile();
+  } else if (isMaster) {
+    // Master — mostrar login interno para escolher operador
+    document.getElementById('entrega-login').style.display = 'block';
+    document.getElementById('entrega-interface').style.display = 'none';
+  }
+}
 
 // ─── LOGIN ────────────────────────────────────────────────────────
 function popularLoginOps() {
@@ -2298,7 +2480,7 @@ function renderEntregaMobile() {
   const container = document.getElementById('ops-result');
   const searchBox = document.querySelector('.sku-search-box');
 
-  if (isMobile()) {
+  if (true) { // Cards em todos os dispositivos
     if (searchBox) searchBox.style.display = 'none';
     // Agrupar por produto/SKU
     let html = '<div style="margin-bottom:8px;font-size:13px;color:var(--gray);font-weight:500">' + ops.length + ' OP(s) em aberto</div>';
