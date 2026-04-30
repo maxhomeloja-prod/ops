@@ -1820,7 +1820,7 @@ function populateFilters() {
       }
     });
   }
-  ['filter-responsavel', 'filter-resp-entrega'].forEach(id => {
+  ['filter-responsavel'].forEach(id => {
     const sel = document.getElementById(id);
     const first = sel.options[0];
     sel.innerHTML = '';
@@ -2145,16 +2145,25 @@ function appLogout() {
 
 // Quando abre aba de entregas — se já logado como operador, pular login interno
 function showViewEntregas() {
-  if (appUsuario) {
-    // Sempre mostrar interface — login já foi feito na entrada
-    document.getElementById('entrega-login').style.display = 'none';
-    document.getElementById('entrega-interface').style.display = 'block';
-    document.getElementById('user-nome-display').textContent = appUsuario;
-    document.getElementById('user-avatar').textContent = appUsuario.charAt(0).toUpperCase();
-    // Se for master, popular select de operadores
-    if (isMaster) popularLoginOps();
-    renderEntregaMobile();
+  if (!appUsuario) return;
+  document.getElementById('entrega-login').style.display = 'none';
+  document.getElementById('entrega-interface').style.display = 'block';
+  document.getElementById('user-nome-display').textContent = appUsuario;
+  document.getElementById('user-avatar').textContent = appUsuario.charAt(0).toUpperCase();
+  // Master pode escolher operador para filtrar cards, ou ver todos
+  if (isMaster) {
+    popularLoginOps();
+    // se não escolheu operador interno, mostra seletor
+    if (!usuarioLogado) {
+      document.getElementById('entrega-login').style.display = 'block';
+      document.getElementById('entrega-interface').style.display = 'none';
+      return;
+    }
+  } else {
+    // Operador comum: usar o próprio login
+    usuarioLogado = appUsuario;
   }
+  renderEntregaMobile();
 }
 
 // ─── LOGIN ────────────────────────────────────────────────────────
@@ -2498,8 +2507,8 @@ function renderEntregaMobileSeNecessario() {
 
 // ─── RENDER OPs MOBILE (cards sem digitar SKU) ────────────────────
 function renderEntregaMobile() {
-  if (!usuarioLogado) return;
   const filtroResp = isMaster ? usuarioLogado : appUsuario;
+  if (!filtroResp) return;
   const ops = allOPs.filter(o =>
     o.responsavel === filtroResp &&
     ['Em producao', 'Finalizado parcial', 'Nao iniciado'].includes(o.situacao) &&
