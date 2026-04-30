@@ -2367,7 +2367,16 @@ function fecharConfirmacao() {
 }
 
 // ─── CONFIRMAR E SALVAR ───────────────────────────────────────────
+let _entregaEmAndamento = false;
+
 async function confirmarEntrega() {
+  if (_entregaEmAndamento) return; // Proteção contra duplo disparo
+  _entregaEmAndamento = true;
+
+  // Desabilitar botão visualmente
+  const btn = document.querySelector('.conf-footer .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+
   const obs = document.getElementById('conf-obs').value;
   const hoje = new Date();
   const dataISO = hoje.toISOString().split('T')[0];
@@ -2425,6 +2434,10 @@ async function confirmarEntrega() {
   } catch(e) {
     toast('Erro ao registrar entrega.', 'error');
     console.error(e);
+  } finally {
+    _entregaEmAndamento = false;
+    const btn = document.querySelector('.conf-footer .btn-primary');
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirmar e Gerar PDF'; }
   }
 }
 
@@ -2512,13 +2525,11 @@ function renderEntregaMobileSeNecessario() {
 function renderEntregaMobile() {
   const filtroResp = isMaster ? usuarioLogado : appUsuario;
   if (!filtroResp) return;
-  console.log('renderEntregaMobile — filtroResp:', filtroResp, '| allOPs:', allOPs.length);
   const ops = allOPs.filter(o =>
     o.responsavel === filtroResp &&
     ['Em producao', 'Finalizado parcial', 'Nao iniciado'].includes(o.situacao) &&
     (o.quantidade - o.entregue) > 0
   );
-  console.log('OPs filtradas:', ops.length, ops.map(o => o.numero + ' ' + o.situacao + ' resp:' + o.responsavel));
 
   const container = document.getElementById('ops-result');
   if (!container) return;
