@@ -859,8 +859,11 @@
             <input type="text" class="sku-input" id="sku-busca" placeholder="Digite o SKU..." oninput="this.value=this.value.toUpperCase()">
             <button class="btn btn-primary" onclick="buscarSKU()">Buscar</button>
           </div>
-          <div class="ops-result" id="ops-result"></div>
-          <div class="op-qtd-row" id="qtd-row" style="display:none">
+        </div>
+
+        <!-- Cards de OPs e resultados de busca -->
+        <div class="ops-result" id="ops-result"></div>
+        <div class="op-qtd-row" id="qtd-row" style="display:none">
             <input type="number" class="op-qtd-input" id="qtd-input" placeholder="Qtd" min="1">
             <button class="btn btn-primary" onclick="adicionarCarrinho()">Adicionar ao carrinho</button>
             <button class="btn btn-outline" onclick="limparBusca()">Cancelar</button>
