@@ -1624,7 +1624,27 @@ let currentOP = null;
 document.getElementById('logo-img').src = LOGO_URL;
   document.getElementById('logo-login').src = LOGO_URL;
   document.getElementById('logo-app-login').src = LOGO_URL;
-// OPs carregam após login
+// Carregar responsáveis para o select de login
+carregarResponsaveisLogin();
+
+async function carregarResponsaveisLogin() {
+  try {
+    const data = await notionQuery(null);
+    const resps = [...new Set(
+      (data.results || [])
+        .map(p => p.properties?.Responsavel?.rich_text?.[0]?.plain_text)
+        .filter(Boolean)
+    )].sort();
+    const sel = document.getElementById('app-login-nome');
+    resps.forEach(r => {
+      if (!Array.from(sel.options).find(o => o.value === r)) {
+        const opt = document.createElement('option');
+        opt.value = r; opt.textContent = r;
+        sel.appendChild(opt);
+      }
+    });
+  } catch(e) {}
+}
 
 // ─── NAVIGATION ───────────────────────────────────────────────────
 function showView(v) {
@@ -1750,6 +1770,7 @@ async function loadOPs(forceRefresh = false) {
     renderStats();
     renderOPs();
     populateFilters();
+    renderEntregaMobileSeNecessario();
     document.getElementById('ops-loading').style.display = 'none';
     document.getElementById('ops-table').style.display = 'table';
   } catch(e) {
@@ -2124,17 +2145,15 @@ function appLogout() {
 
 // Quando abre aba de entregas — se já logado como operador, pular login interno
 function showViewEntregas() {
-  if (!isMaster && usuarioLogado) {
-    // Já logado como operador — mostrar interface direto
+  if (appUsuario) {
+    // Sempre mostrar interface — login já foi feito na entrada
     document.getElementById('entrega-login').style.display = 'none';
     document.getElementById('entrega-interface').style.display = 'block';
     document.getElementById('user-nome-display').textContent = appUsuario;
     document.getElementById('user-avatar').textContent = appUsuario.charAt(0).toUpperCase();
+    // Se for master, popular select de operadores
+    if (isMaster) popularLoginOps();
     renderEntregaMobile();
-  } else if (isMaster) {
-    // Master — mostrar login interno para escolher operador
-    document.getElementById('entrega-login').style.display = 'block';
-    document.getElementById('entrega-interface').style.display = 'none';
   }
 }
 
@@ -2463,11 +2482,26 @@ function gerarPDFEntrega(obs, total) {
 // ─── MOBILE DETECTION ─────────────────────────────────────────────
 function isMobile() { return window.innerWidth <= 768; }
 
+
+function renderEntregaMobileSeNecessario() {
+  // Re-renderiza cards de entrega se a aba estiver ativa e usuário logado
+  const viewRegistrar = document.getElementById('view-registrar');
+  if (viewRegistrar && viewRegistrar.classList.contains('active') && usuarioLogado) {
+    renderEntregaMobile();
+  }
+  // Também atualizar se já logado como operador (OPs carregaram após o login)
+  if (usuarioLogado && document.getElementById('entrega-interface') &&
+      document.getElementById('entrega-interface').style.display !== 'none') {
+    renderEntregaMobile();
+  }
+}
+
 // ─── RENDER OPs MOBILE (cards sem digitar SKU) ────────────────────
 function renderEntregaMobile() {
   if (!usuarioLogado) return;
+  const filtroResp = isMaster ? usuarioLogado : appUsuario;
   const ops = allOPs.filter(o =>
-    o.responsavel === usuarioLogado &&
+    o.responsavel === filtroResp &&
     ['Em producao', 'Finalizado parcial', 'Nao iniciado'].includes(o.situacao) &&
     (o.quantidade - o.entregue) > 0
   );
