@@ -1824,7 +1824,7 @@ function showView(v) {
   document.getElementById('view-' + v).classList.add('active');
   event.target.classList.add('active');
   if (v === 'pagamentos') loadPagamentos();
-  if (v === 'dashboard') loadDashboard();
+  if (v === 'dashboard') { if (allOPs.length) loadDashboard(); else loadOPs().then(() => loadDashboard()); }
   if (v === 'registrar') {
     showViewEntregas();
     if (allOPs.length) popularLoginOps();
@@ -2325,11 +2325,12 @@ function appLogin() {
   if (navDash) navDash.style.display = isMaster ? '' : 'none';
   // Master entra no dashboard
   if (isMaster) {
-    setTimeout(() => {
+    setTimeout(async () => {
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       navDash.classList.add('active');
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById('view-dashboard').classList.add('active');
+      await loadOPs();
       loadDashboard();
     }, 100);
   }
