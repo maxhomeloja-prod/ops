@@ -3141,7 +3141,7 @@ function renderEntregaMobile() {
 
 // ─── BOTTOM SHEET QTD ─────────────────────────────────────────────
 function abrirQtdSheet(opId) {
-  const op = allOPs.find(o => o.id === opId);
+  const op = allOPs.find(o => String(o.id) === String(opId));
   if (!op) return;
   opSelecionada = op;
   const aberto = op.quantidade - op.entregue;
