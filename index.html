@@ -846,15 +846,36 @@
   .dash-filter-select { padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--charcoal); background: var(--white); outline: none; cursor: pointer; }
   .dash-filter-select:focus { border-color: var(--teal); }
 
-  .chart-wrap { background: var(--white); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
-  .chart-wrap h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--charcoal); }
-  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 160px; padding-bottom: 24px; position: relative; border-bottom: 2px solid var(--border); }
-  .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 40px; }
-  .bar-fill { width: 100%; background: var(--teal); border-radius: 4px 4px 0 0; transition: height 0.4s ease; min-height: 2px; position: relative; }
+  .chart-wrap { background: var(--white); border-radius: 14px; padding: 20px 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+  .chart-wrap h3 { font-size: 14px; font-weight: 600; margin-bottom: 20px; color: var(--charcoal); }
+  .bar-chart-container { overflow-x: auto; padding-bottom: 4px; }
+  .bar-chart {
+    display: flex; align-items: flex-end; gap: 12px;
+    height: 120px; padding-bottom: 28px;
+    border-bottom: 1.5px solid var(--border);
+    min-width: max-content;
+    margin: 0 auto;
+  }
+  .bar-col { display: flex; flex-direction: column; align-items: center; width: 48px; flex-shrink: 0; }
+  .bar-fill {
+    width: 32px; background: var(--teal); border-radius: 4px 4px 0 0;
+    transition: height 0.4s ease; min-height: 3px; position: relative;
+    cursor: pointer;
+  }
   .bar-fill:hover { background: var(--teal-dark); }
-  .bar-fill .bar-tip { display: none; position: absolute; top: -28px; left: 50%; transform: translateX(-50%); background: var(--charcoal); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+  .bar-tip {
+    display: none; position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%);
+    background: var(--charcoal); color: white; font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 6px; white-space: nowrap; z-index: 10;
+    pointer-events: none;
+  }
+  .bar-tip::after {
+    content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 4px solid transparent; border-top-color: var(--charcoal);
+  }
   .bar-fill:hover .bar-tip { display: block; }
-  .bar-label { font-size: 10px; color: var(--gray); margin-top: 6px; text-align: center; }
+  .bar-label { font-size: 10px; color: var(--gray); margin-top: 8px; text-align: center; line-height: 1.3; }
 
 </style>
 </head>
@@ -1114,14 +1135,16 @@
         </select>
       </div>
 
-      <!-- KPI Cards -->
-      <div class="dash-grid" id="dash-kpis"></div>
-
       <!-- Gráfico de produção -->
       <div class="chart-wrap">
         <h3>📦 Produção mensal (unidades entregues)</h3>
-        <div class="bar-chart" id="dash-bar-chart"></div>
+        <div class="bar-chart-container">
+          <div class="bar-chart" id="dash-bar-chart"></div>
+        </div>
       </div>
+
+      <!-- KPI Cards -->
+      <div class="dash-grid" id="dash-kpis"></div>
 
       <!-- Linha 2: Barras por responsável + Situações -->
       <div class="dash-row">
