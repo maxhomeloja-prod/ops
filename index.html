@@ -1862,22 +1862,22 @@ function refreshOPs() {
 const CACHE_KEY = 'maxhome_ops_cache';
 const CACHE_TTL = 60000; // 1 minuto
 
-function parseOP(page) {
-  const p = page.properties;
-  const numeroRaw = p['OP Numero']?.number;
-  if (!numeroRaw) return null;
+function parseOP(row) {
+  // Formato Supabase — row já é objeto plano
+  if (!row || !row.op_numero) return null;
   return {
-    id: page.id,
-    numero: String(Math.round(numeroRaw)),
-    situacao: p['Situacao']?.select?.name || '',
-    responsavel: p['Responsavel']?.rich_text?.[0]?.plain_text || '',
-    produto: p['Produto']?.rich_text?.[0]?.plain_text || '',
-    sku: p['SKU']?.rich_text?.[0]?.plain_text || '',
-    quantidade: p['Quantidade']?.number || 0,
-    entregue: p['Entregue']?.number || 0,
-    dataPrevisaoFinal: p['Data Previsao Final']?.date?.start || '',
-    dataInicio: p['Data Inicio']?.date?.start || '',
-    cliente: p['Cliente']?.rich_text?.[0]?.plain_text || '',
+    id: row.id,
+    numero: String(row.op_numero).padStart(4, '0'),
+    situacao: row.situacao || '',
+    responsavel: row.responsavel || '',
+    produto: row.produto || '',
+    sku: row.sku || '',
+    quantidade: row.quantidade || 0,
+    entregue: row.entregue || 0,
+    cliente: row.cliente || '',
+    dataPrevisaoFinal: row.data_previsao_final || '',
+    dataInicio: row.data_inicio || '',
+    perda: row.perda !== undefined ? row.perda : null,
   };
 }
 
