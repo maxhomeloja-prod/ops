@@ -754,6 +754,92 @@
     .resp-cards { grid-template-columns: 1fr; }
   }
 
+
+  /* ─── PAGAMENTOS ─── */
+  .pag-filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .pag-summary {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+  }
+  .pag-summary-card {
+    background: var(--white); border-radius: 12px; padding: 16px 20px;
+    box-shadow: var(--shadow); border-left: 4px solid var(--teal);
+  }
+  .pag-summary-card.red { border-left-color: var(--red); }
+  .pag-summary-card.green { border-left-color: var(--green); }
+  .pag-summary-label { font-size: 11px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .pag-summary-val { font-size: 22px; font-weight: 700; margin-top: 4px; }
+  .pag-table-wrap { background: var(--white); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+  .pag-table { width: 100%; border-collapse: collapse; }
+  .pag-table thead tr { background: var(--charcoal); }
+  .pag-table thead th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.8px; }
+  .pag-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  .pag-table tbody tr:hover { background: var(--teal-light); }
+  .pag-table tbody tr:last-child { border-bottom: none; }
+  .pag-table td { padding: 11px 14px; font-size: 13px; vertical-align: middle; }
+  .pag-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .pag-badge.aberto { background: #fff7ed; color: var(--orange); }
+  .pag-badge.pago { background: #dcfce7; color: var(--green); }
+  .pag-badge.lancado { background: #dbeafe; color: var(--blue); }
+  .pag-badge.nao-lancado { background: #f3f4f6; color: var(--gray); }
+  .btn-pag { padding: 4px 10px; font-size: 11px; border-radius: 6px; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; transition: all 0.15s; }
+  .btn-marcar-pago { background: #dcfce7; color: var(--green); }
+  .btn-marcar-pago:hover { background: #bbf7d0; }
+  .btn-marcar-lancado { background: #dbeafe; color: var(--blue); }
+  .btn-marcar-lancado:hover { background: #bfdbfe; }
+  .btn-marcar-aberto { background: #fff7ed; color: var(--orange); }
+  .btn-marcar-aberto:hover { background: #fed7aa; }
+  @media (max-width: 768px) {
+    .pag-table thead { display: none; }
+    .pag-table, .pag-table tbody, .pag-table tr, .pag-table td { display: block; width: 100%; }
+    .pag-table tr { padding: 12px; border-bottom: 2px solid var(--border); }
+    .pag-table td { padding: 3px 0; border: none; font-size: 13px; }
+  }
+
+
+  /* ─── DASHBOARD ─── */
+  .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi-card {
+    background: var(--white); border-radius: 14px; padding: 20px;
+    box-shadow: var(--shadow); border-top: 3px solid var(--teal);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .kpi-card.blue { border-top-color: var(--blue); }
+  .kpi-card.orange { border-top-color: var(--orange); }
+  .kpi-card.green { border-top-color: var(--green); }
+  .kpi-card.red { border-top-color: var(--red); }
+  .kpi-card.purple { border-top-color: #7c3aed; }
+  .kpi-label { font-size: 11px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
+  .kpi-value { font-size: 30px; font-weight: 700; color: var(--charcoal); line-height: 1; }
+  .kpi-sub { font-size: 12px; color: var(--gray); margin-top: 2px; }
+
+  .dash-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  @media (max-width: 768px) { .dash-row { grid-template-columns: 1fr; } }
+
+  .dash-card {
+    background: var(--white); border-radius: 14px; padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .dash-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--charcoal); }
+
+  /* Barra de progresso responsável */
+  .resp-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .resp-bar-name { font-size: 13px; font-weight: 500; min-width: 80px; }
+  .resp-bar-wrap { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .resp-bar-fill { height: 100%; background: var(--teal); border-radius: 4px; transition: width 0.4s; }
+  .resp-bar-val { font-size: 12px; color: var(--gray); min-width: 60px; text-align: right; }
+
+  /* Lista situações */
+  .sit-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .sit-row:last-child { border-bottom: none; }
+  .sit-count { font-size: 18px; font-weight: 700; }
+
+  /* Campo perda na tabela */
+  .perda-badge { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+  .perda-ok { background: #dcfce7; color: var(--green); }
+  .perda-warn { background: #fff7ed; color: var(--orange); }
+  .perda-high { background: #fee2e2; color: var(--red); }
+
 </style>
 </head>
 <body>
@@ -764,8 +850,10 @@
     <div class="logo-text">Max<span>Home</span> <span style="color:var(--gray);font-weight:300;font-size:14px">| Ordens de Produção</span></div>
   </div>
   <nav id="main-nav" style="display:flex;align-items:center;gap:4px">
-    <button class="nav-btn active" onclick="showView('ops')">📋 Ordens</button>
+    <button class="nav-btn" id="nav-dashboard" onclick="showView('dashboard')" style="display:none">📊 Dashboard</button>
+    <button class="nav-btn active" id="nav-ops" onclick="showView('ops')">📋 Ordens</button>
     <button class="nav-btn" onclick="showView('registrar')">✏️ Entregas</button>
+    <button class="nav-btn" id="nav-pagamentos" onclick="showView('pagamentos')" style="display:none">💰 Pagamentos</button>
     <button class="nav-btn" onclick="refreshOPs()" title="Atualizar" style="padding:8px 10px">🔄</button>
     <div id="header-user" style="display:none;align-items:center;gap:8px;margin-left:8px">
       <div class="header-avatar" id="header-avatar">?</div>
@@ -954,6 +1042,82 @@
     </div>
   </div>
 
+
+  <!-- VIEW: PAGAMENTOS -->
+  <div class="view" id="view-pagamentos">
+    <div class="pag-filters">
+      <select class="filter-select" id="pag-filter-resp" onchange="renderPagamentos()">
+        <option value="">Todos os responsáveis</option>
+      </select>
+      <select class="filter-select" id="pag-filter-status" onchange="renderPagamentos()">
+        <option value="">Todos os status</option>
+        <option value="Em aberto">Em aberto</option>
+        <option value="Pago">Pago</option>
+      </select>
+      <select class="filter-select" id="pag-filter-lancado" onchange="renderPagamentos()">
+        <option value="">Todos</option>
+        <option value="false">Não lançado</option>
+        <option value="true">Lançado</option>
+      </select>
+      <button class="btn btn-outline" onclick="loadPagamentos()" style="margin-left:auto">🔄 Atualizar</button>
+    </div>
+    <div class="pag-summary" id="pag-summary"></div>
+    <div class="pag-table-wrap">
+      <div class="loading" id="pag-loading"><div class="spinner"></div><div>Carregando pagamentos...</div></div>
+      <table class="pag-table" id="pag-table" style="display:none">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Responsável</th>
+            <th>Itens</th>
+            <th>Valor</th>
+            <th>Status</th>
+            <th>Lançado</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="pag-tbody"></tbody>
+      </table>
+      <div class="empty" id="pag-empty" style="display:none">Nenhum registro encontrado.</div>
+    </div>
+  </div>
+
+
+  <!-- VIEW: DASHBOARD -->
+  <div class="view" id="view-dashboard">
+    <div class="loading" id="dash-loading"><div class="spinner"></div><div>Carregando dashboard...</div></div>
+    <div id="dash-content" style="display:none">
+
+      <!-- KPI Cards -->
+      <div class="dash-grid" id="dash-kpis"></div>
+
+      <!-- Linha 2: Barras por responsável + Situações -->
+      <div class="dash-row">
+        <div class="dash-card">
+          <h3>📦 Unidades em aberto por responsável</h3>
+          <div id="dash-resp-bars"></div>
+        </div>
+        <div class="dash-card">
+          <h3>📋 OPs por situação</h3>
+          <div id="dash-situacoes"></div>
+        </div>
+      </div>
+
+      <!-- Linha 3: Top OPs em atraso + Pagamentos pendentes -->
+      <div class="dash-row">
+        <div class="dash-card">
+          <h3>⚠️ OPs com previsão vencida</h3>
+          <div id="dash-atrasadas"></div>
+        </div>
+        <div class="dash-card">
+          <h3>💰 Pagamentos em aberto</h3>
+          <div id="dash-pagamentos"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </main>
 
 <!-- MODAL DETALHE OP -->
@@ -995,6 +1159,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-print" onclick="imprimirOP()">🖨️ Imprimir OP</button>
+      <button class="btn btn-danger" id="btn-finalizar-op" style="display:none" onclick="finalizarOP()">✓ Finalizar OP</button>
       <button class="btn btn-outline" onclick="closeModal()">Fechar</button>
     </div>
   </div>
@@ -1011,9 +1176,30 @@
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────
 // Token gerenciado pelo Cloudflare Worker
-const DB_ID = '8383c935b9f64a6f9c27d4ac7a017564';
-const PROXY = 'https://notion-proxy.maxhome-loja.workers.dev';
+const API = 'https://notion-proxy.maxhome-loja.workers.dev';
 const LOGO_URL = 'https://raw.githubusercontent.com/maxhomeloja-prod/ops/main/logo.jpg';
+
+// ─── API SUPABASE ─────────────────────────────────────────────────
+async function apiGet(path, params = '') {
+  const res = await fetch(`${API}/${path}${params}`, { headers: { 'Content-Type': 'application/json' } });
+  return res.json();
+}
+async function apiPost(path, body) {
+  const res = await fetch(`${API}/${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+async function apiPatch(path, params, body) {
+  const res = await fetch(`${API}/${path}${params}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+    body: JSON.stringify(body)
+  });
+  return res.ok;
+}
 
 // ─── TABELA DE PREÇOS ────────────────────────────────────────────
 const PRECOS = {
@@ -1635,6 +1821,8 @@ function showView(v) {
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('view-' + v).classList.add('active');
   event.target.classList.add('active');
+  if (v === 'pagamentos') loadPagamentos();
+  if (v === 'dashboard') loadDashboard();
   if (v === 'registrar') {
     showViewEntregas();
     if (allOPs.length) popularLoginOps();
@@ -1642,42 +1830,18 @@ function showView(v) {
 }
 
 // ─── NOTION API ───────────────────────────────────────────────────
-async function notionQuery(cursor = null) {
-  const body = { page_size: 100 };
-  if (cursor) body.start_cursor = cursor;
-  const res = await fetch(`${PROXY}?action=query&db=${DB_ID}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  return res.json();
-}
-
-async function notionPatch(pageId, props) {
-  const res = await fetch(`${PROXY}?action=patch&page=${pageId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ properties: props })
-  });
-  invalidateCache();
-  return res.json();
-}
-
 async function carregarResponsaveisLogin() {
   try {
-    const data = await notionQuery(null);
+    const data = await apiGet('ordens_producao', '?select=responsavel&not.responsavel=is.null');
     const resps = [...new Set(
-      (data.results || [])
-        .map(p => p.properties?.Responsavel?.rich_text?.[0]?.plain_text)
-        .filter(Boolean)
+      (Array.isArray(data) ? data : []).map(r => r.responsavel).filter(Boolean)
     )].sort();
     const sel = document.getElementById('app-login-nome');
+    while (sel.options.length > 1) sel.remove(1);
     resps.forEach(r => {
-      if (!Array.from(sel.options).find(o => o.value === r)) {
-        const opt = document.createElement('option');
-        opt.value = r; opt.textContent = r;
-        sel.appendChild(opt);
-      }
+      const opt = document.createElement('option');
+      opt.value = r; opt.textContent = r;
+      sel.appendChild(opt);
     });
   } catch(e) { console.error('Erro ao carregar responsáveis:', e); }
 }
@@ -1733,19 +1897,21 @@ function invalidateCache() {
 }
 
 async function fetchAllOPs() {
-  // Busca primeira página para saber quantas páginas existem
-  const first = await notionQuery(null);
-  let pages = [...(first.results || [])];
-  
-  // Se há mais páginas, buscar todas em paralelo usando cursor encadeado
-  // (Notion não suporta offset paralelo, mas buscamos de forma encadeada rápida)
-  let cursor = first.has_more ? first.next_cursor : null;
-  while (cursor) {
-    const data = await notionQuery(cursor);
-    pages = pages.concat(data.results || []);
-    cursor = data.has_more ? data.next_cursor : null;
-  }
-  return pages;
+  const data = await apiGet('ordens_producao', '?select=*&order=op_numero.desc&limit=500');
+  return (Array.isArray(data) ? data : []).map(row => ({
+    id: row.id,
+    numero: String(row.op_numero).padStart(4, '0'),
+    situacao: row.situacao || '',
+    responsavel: row.responsavel || '',
+    produto: row.produto || '',
+    sku: row.sku || '',
+    quantidade: row.quantidade || 0,
+    entregue: row.entregue || 0,
+    cliente: row.cliente || '',
+    dataPrevisaoFinal: row.data_previsao_final || '',
+    dataInicio: row.data_inicio || '',
+    perda: row.perda !== undefined ? row.perda : null,
+  }));
 }
 
 async function loadOPs(forceRefresh = false) {
@@ -1968,11 +2134,14 @@ function openModal(id) {
     <div class="detail-field"><label>Em Aberto</label><div class="val" style="color:var(--orange)">${aberto.toLocaleString('pt-BR')} un</div></div>
     <div class="detail-field"><label>Previsão de Entrega</label><div class="val">${fmtDate(op.dataPrevisaoFinal)}</div></div>
     <div class="detail-field"><label>Início</label><div class="val">${fmtDate(op.dataInicio)}</div></div>
+    ${op.perda !== null && op.perda !== undefined ? `<div class="detail-field"><label>Perda</label><div class="val" style="color:${op.perda > 10 ? 'var(--red)' : op.perda > 5 ? 'var(--orange)' : 'var(--green)'}">${op.perda.toFixed(2)}%</div></div>` : ''}
   `;
 
   const sel = document.getElementById('select-situacao');
   sel.value = op.situacao;
   document.getElementById('input-entrega').value = '';
+  const btnFin = document.getElementById('btn-finalizar-op');
+  if (btnFin) btnFin.style.display = (isMaster && op.situacao !== 'Finalizado' && op.situacao !== 'Cancelado') ? '' : 'none';
   document.getElementById('op-modal').classList.add('open');
 }
 
@@ -1988,9 +2157,7 @@ async function registrarEntrega() {
   if (!qtd || qtd <= 0) { toast('Informe uma quantidade válida.', 'error'); return; }
   const novaEntrega = currentOP.entregue + qtd;
   try {
-    await notionPatch(currentOP.id, {
-      'Entregue': { number: novaEntrega }
-    });
+    await apiPatch('ordens_producao', `?id=eq.${currentOP.id}`, { entregue: novaEntrega });
     currentOP.entregue = novaEntrega;
     toast(`✓ ${qtd.toLocaleString('pt-BR')} unidades registradas!`, 'success');
     document.getElementById('input-entrega').value = '';
@@ -2004,9 +2171,7 @@ async function alterarSituacao() {
   if (!currentOP) return;
   const nova = document.getElementById('select-situacao').value;
   try {
-    await notionPatch(currentOP.id, {
-      'Situacao': { select: { name: nova } }
-    });
+    await apiPatch('ordens_producao', `?id=eq.${currentOP.id}`, { situacao: nova });
     currentOP.situacao = nova;
     document.getElementById('modal-badge').innerHTML = badgeHTML(nova);
     toast('✓ Situação atualizada!', 'success');
@@ -2092,7 +2257,6 @@ function toast(msg, type = '') {
 
 
 // ─── ENTREGA STATE ────────────────────────────────────────────────
-const DB_ENTREGAS = 'a240a6d851654b03bcf33c9c56d76ece';
 const SENHA_CORRETA = '1234';
 let usuarioLogado = null;
 let opSelecionada = null;
@@ -2149,9 +2313,23 @@ function appLogin() {
   }
 
 
-  // Mostrar/ocultar filtro de responsável
+  // Mostrar/ocultar filtro de responsável e aba pagamentos
   const filtroResp = document.getElementById('filter-responsavel');
   if (filtroResp) filtroResp.style.display = isMaster ? '' : 'none';
+  const navPag = document.getElementById('nav-pagamentos');
+  if (navPag) navPag.style.display = isMaster ? '' : 'none';
+  const navDash = document.getElementById('nav-dashboard');
+  if (navDash) navDash.style.display = isMaster ? '' : 'none';
+  // Master entra no dashboard
+  if (isMaster) {
+    setTimeout(() => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      navDash.classList.add('active');
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-dashboard').classList.add('active');
+      loadDashboard();
+    }, 100);
+  }
   // Carregar OPs
   loadOPs();
 }
@@ -2421,21 +2599,13 @@ async function confirmarEntrega() {
 
   try {
     // 1. Salvar no banco de entregas
-    await fetch(`${PROXY}?action=create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        parent: { database_id: DB_ENTREGAS },
-        properties: {
-          'Nome': { title: [{ text: { content: nomeRegistro } }] },
-          'Responsavel': { rich_text: [{ text: { content: usuarioLogado } }] },
-          'Data Entrega': { date: { start: dataISO } },
-          'Valor Total': { number: parseFloat(total.toFixed(2)) },
-          'Status': { select: { name: 'Em aberto' } },
-          'Observacoes': { rich_text: [{ text: { content: obs } }] },
-          'Itens': { rich_text: [{ text: { content: itensStr } }] },
-        }
-      })
+    await apiPost('registros_entrega', {
+      responsavel: usuarioLogado,
+      data_entrega: dataISO,
+      valor_total: parseFloat(total.toFixed(2)),
+      status: 'Em aberto',
+      observacoes: obs,
+      itens: itensStr
     });
 
     // 2. Atualizar OPs (apenas itens com OP vinculada)
@@ -2446,9 +2616,9 @@ async function confirmarEntrega() {
       const novaEntrega = op.entregue + item.qtd;
       const novoAberto = op.quantidade - novaEntrega;
       const novaSit = novoAberto <= 0 ? 'Finalizado' : 'Finalizado parcial';
-      await notionPatch(op.id, {
-        'Entregue': { number: novaEntrega },
-        'Situacao': { select: { name: novaSit } }
+      await apiPatch('ordens_producao', `?id=eq.${op.id}`, {
+        entregue: novaEntrega,
+        situacao: novaSit
       });
       op.entregue = novaEntrega;
       op.situacao = novaSit;
@@ -2538,6 +2708,220 @@ function gerarPDFEntrega(obs, total) {
   setTimeout(() => window.print(), 300);
 }
 
+
+
+// ─── PAGAMENTOS ────────────────────────────────────────────────────
+let allPagamentos = [];
+
+async function loadPagamentos() {
+  document.getElementById('pag-loading').style.display = 'block';
+  document.getElementById('pag-table').style.display = 'none';
+  document.getElementById('pag-empty').style.display = 'none';
+  try {
+    const data = await apiGet('registros_entrega', '?select=*&order=data_entrega.desc,criado_em.desc&limit=500');
+    allPagamentos = Array.isArray(data) ? data : [];
+    // Popular filtro de responsável
+    const resps = [...new Set(allPagamentos.map(r => r.responsavel).filter(Boolean))].sort();
+    const sel = document.getElementById('pag-filter-resp');
+    while (sel.options.length > 1) sel.remove(1);
+    resps.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; sel.appendChild(o); });
+    renderPagamentos();
+  } catch(e) {
+    document.getElementById('pag-loading').innerHTML = '<div style="color:var(--red)">Erro ao carregar pagamentos.</div>';
+  }
+}
+
+function renderPagamentos() {
+  const respF = document.getElementById('pag-filter-resp').value;
+  const statusF = document.getElementById('pag-filter-status').value;
+  const lancadoF = document.getElementById('pag-filter-lancado').value;
+
+  let rows = allPagamentos.filter(r => {
+    if (respF && r.responsavel !== respF) return false;
+    if (statusF && r.status !== statusF) return false;
+    if (lancadoF !== '' && String(r.lancado) !== lancadoF) return false;
+    return true;
+  });
+
+  // Summary
+  const totalAberto = rows.filter(r => r.status === 'Em aberto').reduce((s, r) => s + (r.valor_total || 0), 0);
+  const totalPago = rows.filter(r => r.status === 'Pago').reduce((s, r) => s + (r.valor_total || 0), 0);
+  const naoLancado = rows.filter(r => !r.lancado).length;
+  const fmt = n => 'R$ ' + n.toFixed(2).replace('.', ',');
+  document.getElementById('pag-summary').innerHTML = `
+    <div class="pag-summary-card red"><div class="pag-summary-label">Em aberto</div><div class="pag-summary-val" style="color:var(--orange)">${fmt(totalAberto)}</div></div>
+    <div class="pag-summary-card green"><div class="pag-summary-label">Total pago</div><div class="pag-summary-val" style="color:var(--green)">${fmt(totalPago)}</div></div>
+    <div class="pag-summary-card"><div class="pag-summary-label">Não lançados</div><div class="pag-summary-val" style="color:var(--blue)">${naoLancado}</div></div>
+  `;
+
+  document.getElementById('pag-loading').style.display = 'none';
+  if (!rows.length) {
+    document.getElementById('pag-table').style.display = 'none';
+    document.getElementById('pag-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('pag-table').style.display = 'table';
+  document.getElementById('pag-empty').style.display = 'none';
+
+  document.getElementById('pag-tbody').innerHTML = rows.map(r => {
+    const data = r.data_entrega ? r.data_entrega.split('-').reverse().join('/') : '—';
+    const valor = r.valor_total ? fmt(r.valor_total) : '—';
+    const itens = r.itens ? r.itens.substring(0, 60) + (r.itens.length > 60 ? '...' : '') : '—';
+    const statusBadge = r.status === 'Pago'
+      ? '<span class="pag-badge pago">✓ Pago</span>'
+      : '<span class="pag-badge aberto">● Em aberto</span>';
+    const lancadoBadge = r.lancado
+      ? '<span class="pag-badge lancado">✓ Lançado</span>'
+      : '<span class="pag-badge nao-lancado">Não lançado</span>';
+    const btnStatus = r.status === 'Pago'
+      ? `<button class="btn-pag btn-marcar-aberto" onclick="togglePagStatus(${r.id}, 'Em aberto')">↩ Reabrir</button>`
+      : `<button class="btn-pag btn-marcar-pago" onclick="togglePagStatus(${r.id}, 'Pago')">✓ Marcar pago</button>`;
+    const btnLancado = r.lancado
+      ? `<button class="btn-pag btn-marcar-aberto" onclick="toggleLancado(${r.id}, false)">↩ Desmarcar</button>`
+      : `<button class="btn-pag btn-marcar-lancado" onclick="toggleLancado(${r.id}, true)">✓ Lançar</button>`;
+    return `<tr>
+      <td style="white-space:nowrap">${data}</td>
+      <td style="font-weight:600">${r.responsavel || '—'}</td>
+      <td style="font-size:11px;color:var(--gray);max-width:200px">${itens}</td>
+      <td style="font-weight:700">${valor}</td>
+      <td>${statusBadge}</td>
+      <td>${lancadoBadge}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">${btnStatus} ${btnLancado}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function togglePagStatus(id, novoStatus) {
+  await apiPatch('registros_entrega', `?id=eq.${id}`, { status: novoStatus });
+  const row = allPagamentos.find(r => r.id === id);
+  if (row) row.status = novoStatus;
+  renderPagamentos();
+  toast(`✓ Status atualizado: ${novoStatus}`, 'success');
+}
+
+async function toggleLancado(id, valor) {
+  await apiPatch('registros_entrega', `?id=eq.${id}`, { lancado: valor });
+  const row = allPagamentos.find(r => r.id === id);
+  if (row) row.lancado = valor;
+  renderPagamentos();
+  toast(valor ? '✓ Marcado como lançado' : '↩ Desmarcado', 'success');
+}
+
+
+// ─── DASHBOARD ─────────────────────────────────────────────────────
+async function loadDashboard() {
+  document.getElementById('dash-loading').style.display = 'block';
+  document.getElementById('dash-content').style.display = 'none';
+
+  try {
+    // Buscar dados em paralelo
+    const [pagData] = await Promise.all([
+      apiGet('registros_entrega', '?select=responsavel,valor_total,status,data_entrega&order=data_entrega.desc&limit=500')
+    ]);
+
+    const ops = allOPs; // já carregadas
+    const pags = Array.isArray(pagData) ? pagData : [];
+    const hoje = new Date().toISOString().split('T')[0];
+
+    // ── KPIs ──────────────────────────────────────────────────────
+    const totalOPs = ops.length;
+    const opsAtivas = ops.filter(o => ['Em producao','Nao iniciado','Finalizado parcial'].includes(o.situacao));
+    const totalAberto = opsAtivas.reduce((s, o) => s + Math.max(0, (o.quantidade||0)-(o.entregue||0)), 0);
+    const totalProduzido = ops.reduce((s, o) => s + (o.entregue||0), 0);
+    const opsAtrasadas = opsAtivas.filter(o => o.dataPrevisaoFinal && o.dataPrevisaoFinal < hoje).length;
+    const pagAberto = pags.filter(p => p.status === 'Em aberto').reduce((s, p) => s + (p.valor_total||0), 0);
+    const fmt = n => 'R$ ' + n.toFixed(2).replace('.',',');
+    const fmtN = n => n.toLocaleString('pt-BR');
+
+    document.getElementById('dash-kpis').innerHTML = `
+      <div class="kpi-card blue"><div class="kpi-label">Total de OPs</div><div class="kpi-value">${totalOPs}</div><div class="kpi-sub">${opsAtivas.length} ativas</div></div>
+      <div class="kpi-card"><div class="kpi-label">Unidades em aberto</div><div class="kpi-value">${fmtN(totalAberto)}</div><div class="kpi-sub">a produzir</div></div>
+      <div class="kpi-card green"><div class="kpi-label">Total produzido</div><div class="kpi-value">${fmtN(totalProduzido)}</div><div class="kpi-sub">unidades entregues</div></div>
+      <div class="kpi-card orange"><div class="kpi-label">OPs atrasadas</div><div class="kpi-value" style="color:var(--orange)">${opsAtrasadas}</div><div class="kpi-sub">previsão vencida</div></div>
+      <div class="kpi-card red"><div class="kpi-label">A pagar</div><div class="kpi-value" style="color:var(--orange)">${fmt(pagAberto)}</div><div class="kpi-sub">em aberto</div></div>
+    `;
+
+    // ── Barras por responsável ────────────────────────────────────
+    const respMap = {};
+    opsAtivas.forEach(o => {
+      if (!o.responsavel) return;
+      if (!respMap[o.responsavel]) respMap[o.responsavel] = 0;
+      respMap[o.responsavel] += Math.max(0, (o.quantidade||0)-(o.entregue||0));
+    });
+    const maxVal = Math.max(...Object.values(respMap), 1);
+    const respBars = Object.entries(respMap).sort((a,b) => b[1]-a[1]).map(([nome, val]) =>
+      `<div class="resp-bar-row">
+        <div class="resp-bar-name">${nome}</div>
+        <div class="resp-bar-wrap"><div class="resp-bar-fill" style="width:${(val/maxVal*100).toFixed(0)}%"></div></div>
+        <div class="resp-bar-val">${fmtN(val)} un</div>
+      </div>`
+    ).join('');
+    document.getElementById('dash-resp-bars').innerHTML = respBars || '<div class="empty" style="padding:20px">Nenhuma OP ativa</div>';
+
+    // ── Situações ────────────────────────────────────────────────
+    const sits = {
+      'Em producao': {label:'Em Produção', color:'var(--blue)'},
+      'Nao iniciado': {label:'Não Iniciado', color:'var(--gray)'},
+      'Finalizado parcial': {label:'Finalizado Parcial', color:'var(--orange)'},
+      'Finalizado': {label:'Finalizado', color:'var(--green)'},
+      'Cancelado': {label:'Cancelado', color:'var(--red)'},
+    };
+    const sitRows = Object.entries(sits).map(([key, {label, color}]) => {
+      const count = ops.filter(o => o.situacao === key).length;
+      if (!count) return '';
+      return `<div class="sit-row"><span class="badge badge-${key.toLowerCase().replace(/ /g,'-')}">${label}</span><span class="sit-count" style="color:${color}">${count}</span></div>`;
+    }).join('');
+    document.getElementById('dash-situacoes').innerHTML = sitRows;
+
+    // ── OPs atrasadas ─────────────────────────────────────────────
+    const atrasadas = opsAtivas.filter(o => o.dataPrevisaoFinal && o.dataPrevisaoFinal < hoje)
+      .sort((a,b) => a.dataPrevisaoFinal.localeCompare(b.dataPrevisaoFinal)).slice(0,5);
+    document.getElementById('dash-atrasadas').innerHTML = atrasadas.length
+      ? atrasadas.map(o => `<div class="sit-row">
+          <div><div style="font-weight:600;font-size:13px">#${o.numero} ${o.produto?.substring(0,35)||''}</div>
+          <div style="font-size:11px;color:var(--gray)">${o.responsavel} · prev. ${o.dataPrevisaoFinal?.split('-').reverse().join('/')}</div></div>
+          <div style="font-size:13px;font-weight:700;color:var(--orange)">${fmtN(Math.max(0,(o.quantidade||0)-(o.entregue||0)))} un</div>
+        </div>`).join('')
+      : '<div style="color:var(--green);font-size:14px;padding:12px 0">✓ Nenhuma OP em atraso</div>';
+
+    // ── Pagamentos pendentes ──────────────────────────────────────
+    const pagPend = pags.filter(p => p.status === 'Em aberto')
+      .sort((a,b) => a.data_entrega?.localeCompare(b.data_entrega||'')).slice(0,5);
+    document.getElementById('dash-pagamentos').innerHTML = pagPend.length
+      ? pagPend.map(p => `<div class="sit-row">
+          <div><div style="font-weight:600;font-size:13px">${p.responsavel}</div>
+          <div style="font-size:11px;color:var(--gray)">${p.data_entrega?.split('-').reverse().join('/')}</div></div>
+          <div style="font-weight:700;color:var(--orange)">${fmt(p.valor_total||0)}</div>
+        </div>`).join('')
+      : '<div style="color:var(--green);font-size:14px;padding:12px 0">✓ Nenhum pagamento pendente</div>';
+
+    document.getElementById('dash-loading').style.display = 'none';
+    document.getElementById('dash-content').style.display = 'block';
+  } catch(e) {
+    document.getElementById('dash-loading').innerHTML = '<div style="color:var(--red)">Erro ao carregar dashboard.</div>';
+    console.error(e);
+  }
+}
+
+async function finalizarOP() {
+  if (!currentOP) return;
+  const perda = currentOP.quantidade > 0
+    ? Math.max(0, (currentOP.quantidade - currentOP.entregue) / currentOP.quantidade * 100)
+    : 0;
+  const perdaFmt = perda.toFixed(2);
+  if (!confirm(`Finalizar OP #${currentOP.numero}?\nPerda calculada: ${perdaFmt}%`)) return;
+  try {
+    await apiPatch('ordens_producao', `?id=eq.${currentOP.id}`, {
+      situacao: 'Finalizado',
+      perda: parseFloat(perdaFmt)
+    });
+    currentOP.situacao = 'Finalizado';
+    currentOP.perda = parseFloat(perdaFmt);
+    document.getElementById('modal-badge').innerHTML = badgeHTML('Finalizado');
+    renderOPs(); renderStats();
+    toast(`✓ OP finalizada — perda: ${perdaFmt}%`, 'success');
+  } catch(e) { toast('Erro ao finalizar OP.', 'error'); }
+}
 
 // ─── MOBILE DETECTION ─────────────────────────────────────────────
 function isMobile() { return window.innerWidth <= 768; }
