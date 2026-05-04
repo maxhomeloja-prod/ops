@@ -2918,7 +2918,7 @@ function renderDashFiltros() {
   let totalProduzido = 0;
   pagsParaProd.forEach(p => {
     if (p.itens) {
-      const matches = [...p.itens.matchAll(/(\d+)\s*un/g)];
+      const matches = [...p.itens.matchAll(/x(\d+)/gi)];
       matches.forEach(m => { totalProduzido += parseInt(m[1]); });
     }
   });
@@ -2938,7 +2938,7 @@ function renderDashFiltros() {
     if (!mes) return;
     if (!prodPorMes[mes]) prodPorMes[mes] = 0;
     if (p.itens) {
-      const matches = [...p.itens.matchAll(/(\d+)\s*un/g)];
+      const matches = [...p.itens.matchAll(/x(\d+)/gi)];
       matches.forEach(m => { prodPorMes[mes] += parseInt(m[1]); });
     }
   });
