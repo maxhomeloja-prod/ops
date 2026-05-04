@@ -840,6 +840,22 @@
   .perda-warn { background: #fff7ed; color: var(--orange); }
   .perda-high { background: #fee2e2; color: var(--red); }
 
+
+  /* ─── DASHBOARD FILTROS + GRÁFICO ─── */
+  .dash-filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .dash-filter-select { padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--charcoal); background: var(--white); outline: none; cursor: pointer; }
+  .dash-filter-select:focus { border-color: var(--teal); }
+
+  .chart-wrap { background: var(--white); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+  .chart-wrap h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--charcoal); }
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 160px; padding-bottom: 24px; position: relative; border-bottom: 2px solid var(--border); }
+  .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 40px; }
+  .bar-fill { width: 100%; background: var(--teal); border-radius: 4px 4px 0 0; transition: height 0.4s ease; min-height: 2px; position: relative; }
+  .bar-fill:hover { background: var(--teal-dark); }
+  .bar-fill .bar-tip { display: none; position: absolute; top: -28px; left: 50%; transform: translateX(-50%); background: var(--charcoal); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+  .bar-fill:hover .bar-tip { display: block; }
+  .bar-label { font-size: 10px; color: var(--gray); margin-top: 6px; text-align: center; }
+
 </style>
 </head>
 <body>
@@ -1088,8 +1104,24 @@
     <div class="loading" id="dash-loading"><div class="spinner"></div><div>Carregando dashboard...</div></div>
     <div id="dash-content" style="display:none">
 
+      <!-- Filtros -->
+      <div class="dash-filters">
+        <select class="dash-filter-select" id="dash-filter-resp" onchange="renderDashFiltros()">
+          <option value="">Todos os responsáveis</option>
+        </select>
+        <select class="dash-filter-select" id="dash-filter-mes" onchange="renderDashFiltros()">
+          <option value="">Todos os meses</option>
+        </select>
+      </div>
+
       <!-- KPI Cards -->
       <div class="dash-grid" id="dash-kpis"></div>
+
+      <!-- Gráfico de produção -->
+      <div class="chart-wrap">
+        <h3>📦 Produção mensal (unidades entregues)</h3>
+        <div class="bar-chart" id="dash-bar-chart"></div>
+      </div>
 
       <!-- Linha 2: Barras por responsável + Situações -->
       <div class="dash-row">
@@ -1105,9 +1137,9 @@
 
       <!-- Linha 3: OPs atrasadas + Pagamentos em aberto (todos) -->
       <div class="dash-row">
-        <div class="dash-card">
+        <div class="dash-card" style="overflow:hidden">
           <h3>⚠️ OPs com previsão vencida</h3>
-          <div id="dash-atrasadas"></div>
+          <div id="dash-atrasadas" style="max-height:400px;overflow-y:auto"></div>
         </div>
         <div class="dash-card" style="overflow:hidden">
           <h3>💰 Pagamentos em aberto</h3>
@@ -2819,107 +2851,177 @@ async function toggleLancado(id, valor) {
 
 
 // ─── DASHBOARD ─────────────────────────────────────────────────────
+let _dashPags = [];
+
 async function loadDashboard() {
   document.getElementById('dash-loading').style.display = 'block';
   document.getElementById('dash-content').style.display = 'none';
-
   try {
-    // Buscar dados em paralelo
-    const [pagData] = await Promise.all([
-      apiGet('registros_entrega', '?select=responsavel,valor_total,status,data_entrega&order=data_entrega.desc&limit=500')
-    ]);
+    const data = await apiGet('registros_entrega', '?select=*&order=data_entrega.desc&limit=500');
+    _dashPags = Array.isArray(data) ? data : [];
 
-    const ops = allOPs; // já carregadas
-    const pags = Array.isArray(pagData) ? pagData : [];
-    const hoje = new Date().toISOString().split('T')[0];
+    // Popular filtro responsável
+    const resps = [...new Set(allOPs.map(o => o.responsavel).filter(Boolean))].sort();
+    const selR = document.getElementById('dash-filter-resp');
+    while (selR.options.length > 1) selR.remove(1);
+    resps.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; selR.appendChild(o); });
 
-    // ── KPIs ──────────────────────────────────────────────────────
-    const totalOPs = ops.length;
-    const opsAtivas = ops.filter(o => ['Em producao','Nao iniciado','Finalizado parcial'].includes(o.situacao));
-    const totalAberto = opsAtivas.reduce((s, o) => s + Math.max(0, (o.quantidade||0)-(o.entregue||0)), 0);
-    const totalProduzido = ops.reduce((s, o) => s + (o.entregue||0), 0);
-    const opsAtrasadas = opsAtivas.filter(o => o.dataPrevisaoFinal && o.dataPrevisaoFinal < hoje).length;
-    const pagAberto = pags.filter(p => p.status === 'Em aberto').reduce((s, p) => s + (p.valor_total||0), 0);
-    const fmt = n => 'R$ ' + n.toFixed(2).replace('.',',');
-    const fmtN = n => n.toLocaleString('pt-BR');
-
-    document.getElementById('dash-kpis').innerHTML = `
-      <div class="kpi-card blue"><div class="kpi-label">Total de OPs</div><div class="kpi-value">${totalOPs}</div><div class="kpi-sub">${opsAtivas.length} ativas</div></div>
-      <div class="kpi-card"><div class="kpi-label">Unidades em aberto</div><div class="kpi-value">${fmtN(totalAberto)}</div><div class="kpi-sub">a produzir</div></div>
-      <div class="kpi-card green"><div class="kpi-label">Total produzido</div><div class="kpi-value">${fmtN(totalProduzido)}</div><div class="kpi-sub">unidades entregues</div></div>
-      <div class="kpi-card orange"><div class="kpi-label">OPs atrasadas</div><div class="kpi-value" style="color:var(--orange)">${opsAtrasadas}</div><div class="kpi-sub">previsão vencida</div></div>
-      <div class="kpi-card red"><div class="kpi-label">A pagar</div><div class="kpi-value" style="color:var(--orange)">${fmt(pagAberto)}</div><div class="kpi-sub">em aberto</div></div>
-    `;
-
-    // ── Barras por responsável ────────────────────────────────────
-    const respMap = {};
-    opsAtivas.forEach(o => {
-      if (!o.responsavel) return;
-      if (!respMap[o.responsavel]) respMap[o.responsavel] = 0;
-      respMap[o.responsavel] += Math.max(0, (o.quantidade||0)-(o.entregue||0));
+    // Popular filtro mês
+    const meses = [...new Set(_dashPags.map(p => p.data_entrega?.substring(0,7)).filter(Boolean))].sort().reverse();
+    const selM = document.getElementById('dash-filter-mes');
+    while (selM.options.length > 1) selM.remove(1);
+    meses.forEach(m => {
+      const [ano, mes] = m.split('-');
+      const label = new Date(ano, mes-1).toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+      const opt = document.createElement('option'); opt.value = m; opt.textContent = label;
+      selM.appendChild(opt);
     });
-    const maxVal = Math.max(...Object.values(respMap), 1);
-    const respBars = Object.entries(respMap).sort((a,b) => b[1]-a[1]).map(([nome, val]) =>
-      `<div class="resp-bar-row">
-        <div class="resp-bar-name">${nome}</div>
-        <div class="resp-bar-wrap"><div class="resp-bar-fill" style="width:${(val/maxVal*100).toFixed(0)}%"></div></div>
-        <div class="resp-bar-val">${fmtN(val)} un</div>
-      </div>`
-    ).join('');
-    document.getElementById('dash-resp-bars').innerHTML = respBars || '<div class="empty" style="padding:20px">Nenhuma OP ativa</div>';
-
-    // ── Perda média por responsável ───────────────────────────────
-    const perdaMap = {};
-    ops.filter(o => o.situacao === 'Finalizado' && o.perda !== null && o.perda !== undefined)
-      .forEach(o => {
-        if (!perdaMap[o.responsavel]) perdaMap[o.responsavel] = { total: 0, count: 0 };
-        perdaMap[o.responsavel].total += parseFloat(o.perda);
-        perdaMap[o.responsavel].count += 1;
-      });
-    const perdaRows = Object.entries(perdaMap)
-      .map(([nome, {total, count}]) => ({ nome, media: total / count, count }))
-      .sort((a, b) => b.media - a.media);
-    document.getElementById('dash-perdas').innerHTML = perdaRows.length
-      ? perdaRows.map(r => {
-          const cor = r.media > 10 ? 'var(--red)' : r.media > 5 ? 'var(--orange)' : 'var(--green)';
-          return `<div class="sit-row">
-            <div>
-              <div style="font-weight:600;font-size:13px">${r.nome}</div>
-              <div style="font-size:11px;color:var(--gray)">${r.count} OP(s) finalizada(s)</div>
-            </div>
-            <div style="font-weight:700;font-size:18px;color:${cor}">${r.media.toFixed(2)}%</div>
-          </div>`;
-        }).join('')
-      : '<div style="color:var(--gray);font-size:14px;padding:12px 0">Nenhuma OP finalizada ainda.</div>';
-
-    // ── OPs atrasadas ─────────────────────────────────────────────
-    const atrasadas = opsAtivas.filter(o => o.dataPrevisaoFinal && o.dataPrevisaoFinal < hoje)
-      .sort((a,b) => a.dataPrevisaoFinal.localeCompare(b.dataPrevisaoFinal)).slice(0,5);
-    document.getElementById('dash-atrasadas').innerHTML = atrasadas.length
-      ? atrasadas.map(o => `<div class="sit-row">
-          <div><div style="font-weight:600;font-size:13px">#${o.numero} ${o.produto?.substring(0,35)||''}</div>
-          <div style="font-size:11px;color:var(--gray)">${o.responsavel} · prev. ${o.dataPrevisaoFinal?.split('-').reverse().join('/')}</div></div>
-          <div style="font-size:13px;font-weight:700;color:var(--orange)">${fmtN(Math.max(0,(o.quantidade||0)-(o.entregue||0)))} un</div>
-        </div>`).join('')
-      : '<div style="color:var(--green);font-size:14px;padding:12px 0">✓ Nenhuma OP em atraso</div>';
-
-    // ── Pagamentos pendentes ──────────────────────────────────────
-    const pagPend = pags.filter(p => p.status === 'Em aberto')
-      .sort((a,b) => a.data_entrega?.localeCompare(b.data_entrega||''));
-    document.getElementById('dash-pagamentos').innerHTML = pagPend.length
-      ? pagPend.map(p => `<div class="sit-row">
-          <div><div style="font-weight:600;font-size:13px">${p.responsavel}</div>
-          <div style="font-size:11px;color:var(--gray)">${p.data_entrega?.split('-').reverse().join('/')}</div></div>
-          <div style="font-weight:700;color:var(--orange)">${fmt(p.valor_total||0)}</div>
-        </div>`).join('')
-      : '<div style="color:var(--green);font-size:14px;padding:12px 0">✓ Nenhum pagamento pendente</div>';
 
     document.getElementById('dash-loading').style.display = 'none';
     document.getElementById('dash-content').style.display = 'block';
+    renderDashFiltros();
   } catch(e) {
     document.getElementById('dash-loading').innerHTML = '<div style="color:var(--red)">Erro ao carregar dashboard.</div>';
     console.error(e);
   }
+}
+
+function renderDashFiltros() {
+  const respF = document.getElementById('dash-filter-resp')?.value || '';
+  const mesF  = document.getElementById('dash-filter-mes')?.value  || '';
+  const hoje  = new Date().toISOString().split('T')[0];
+  const fmt   = n => 'R$ ' + n.toFixed(2).replace('.',',');
+  const fmtN  = n => n.toLocaleString('pt-BR');
+
+  // Filtrar OPs
+  let ops = allOPs;
+  if (respF) ops = ops.filter(o => o.responsavel === respF);
+  if (mesF)  ops = ops.filter(o => (o.dataPrevisaoFinal||'').startsWith(mesF));
+
+  // Filtrar pagamentos
+  let pags = _dashPags;
+  if (respF) pags = pags.filter(p => p.responsavel === respF);
+  if (mesF)  pags = pags.filter(p => (p.data_entrega||'').startsWith(mesF));
+
+  // ── KPIs ──────────────────────────────────────────────────────
+  const opsAtivas = ops.filter(o => ['Em producao','Nao iniciado','Finalizado parcial'].includes(o.situacao));
+  const totalAberto = opsAtivas.reduce((s,o) => s + Math.max(0,(o.quantidade||0)-(o.entregue||0)), 0);
+  const opsAtrasadas = opsAtivas.filter(o => o.dataPrevisaoFinal && o.dataPrevisaoFinal < hoje).length;
+  const pagAberto = pags.filter(p => p.status === 'Em aberto').reduce((s,p) => s + (p.valor_total||0), 0);
+
+  // Total produzido: usa registros_entrega filtrados (coerente com gráfico e filtro de mês)
+  const pagsParaProd = _dashPags.filter(p => {
+    if (respF && p.responsavel !== respF) return false;
+    if (mesF && !(p.data_entrega||'').startsWith(mesF)) return false;
+    return true;
+  });
+  let totalProduzido = 0;
+  pagsParaProd.forEach(p => {
+    if (p.itens) {
+      const matches = [...p.itens.matchAll(/(\d+)\s*un/g)];
+      matches.forEach(m => { totalProduzido += parseInt(m[1]); });
+    }
+  });
+
+  document.getElementById('dash-kpis').innerHTML = `
+    <div class="kpi-card blue"><div class="kpi-label">Total de OPs</div><div class="kpi-value">${ops.length}</div><div class="kpi-sub">${opsAtivas.length} ativas</div></div>
+    <div class="kpi-card"><div class="kpi-label">Unidades em aberto</div><div class="kpi-value">${fmtN(totalAberto)}</div><div class="kpi-sub">a produzir</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Total produzido</div><div class="kpi-value">${fmtN(totalProduzido)}</div><div class="kpi-sub">unidades entregues</div></div>
+    <div class="kpi-card orange"><div class="kpi-label">OPs atrasadas</div><div class="kpi-value" style="color:var(--orange)">${opsAtrasadas}</div><div class="kpi-sub">previsão vencida</div></div>
+    <div class="kpi-card red"><div class="kpi-label">A pagar</div><div class="kpi-value" style="color:var(--orange)">${fmt(pagAberto)}</div><div class="kpi-sub">em aberto</div></div>
+  `;
+
+  // ── Gráfico de produção por mês ────────────────────────────────
+  const prodPorMes = {};
+  _dashPags.filter(p => !respF || p.responsavel === respF).forEach(p => {
+    const mes = p.data_entrega?.substring(0,7);
+    if (!mes) return;
+    if (!prodPorMes[mes]) prodPorMes[mes] = 0;
+    if (p.itens) {
+      const matches = [...p.itens.matchAll(/(\d+)\s*un/g)];
+      matches.forEach(m => { prodPorMes[mes] += parseInt(m[1]); });
+    }
+  });
+  const mesesGraf = Object.keys(prodPorMes).sort();
+  const maxProd   = Math.max(...Object.values(prodPorMes), 1);
+  const chartEl   = document.getElementById('dash-bar-chart');
+  if (chartEl) {
+    chartEl.innerHTML = mesesGraf.length
+      ? mesesGraf.map(m => {
+          const val = prodPorMes[m];
+          const h   = Math.max(4, (val / maxProd) * 140);
+          const [ano, mes] = m.split('-');
+          const label = new Date(ano, mes-1).toLocaleDateString('pt-BR', {month:'short'}) + '/' + ano.slice(2);
+          return `<div class="bar-col">
+            <div class="bar-fill" style="height:${h}px">
+              <div class="bar-tip">${fmtN(val)} un</div>
+            </div>
+            <div class="bar-label">${label}</div>
+          </div>`;
+        }).join('')
+      : '<div style="color:var(--gray);font-size:13px;padding:20px">Sem dados de entrega ainda.</div>';
+  }
+
+  // ── Barras por responsável ─────────────────────────────────────
+  const respMap = {};
+  opsAtivas.forEach(o => {
+    if (!o.responsavel) return;
+    if (!respMap[o.responsavel]) respMap[o.responsavel] = 0;
+    respMap[o.responsavel] += Math.max(0,(o.quantidade||0)-(o.entregue||0));
+  });
+  const maxVal  = Math.max(...Object.values(respMap), 1);
+  const respBars = Object.entries(respMap).sort((a,b) => b[1]-a[1]).map(([nome, val]) =>
+    `<div class="resp-bar-row">
+      <div class="resp-bar-name">${nome}</div>
+      <div class="resp-bar-wrap"><div class="resp-bar-fill" style="width:${(val/maxVal*100).toFixed(0)}%"></div></div>
+      <div class="resp-bar-val">${fmtN(val)} un</div>
+    </div>`
+  ).join('');
+  document.getElementById('dash-resp-bars').innerHTML = respBars || '<div class="empty" style="padding:20px">Nenhuma OP ativa</div>';
+
+  // ── Perda média por responsável ────────────────────────────────
+  const perdaMap = {};
+  ops.filter(o => o.situacao === 'Finalizado' && o.perda != null)
+    .forEach(o => {
+      if (!perdaMap[o.responsavel]) perdaMap[o.responsavel] = {total:0, count:0};
+      perdaMap[o.responsavel].total += parseFloat(o.perda);
+      perdaMap[o.responsavel].count += 1;
+    });
+  const perdaRows = Object.entries(perdaMap)
+    .map(([nome,{total,count}]) => ({nome, media: total/count, count}))
+    .sort((a,b) => b.media - a.media);
+  document.getElementById('dash-perdas').innerHTML = perdaRows.length
+    ? perdaRows.map(r => {
+        const cor = r.media > 10 ? 'var(--red)' : r.media > 5 ? 'var(--orange)' : 'var(--green)';
+        return `<div class="sit-row">
+          <div><div style="font-weight:600;font-size:13px">${r.nome}</div>
+          <div style="font-size:11px;color:var(--gray)">${r.count} OP(s) finalizada(s)</div></div>
+          <div style="font-weight:700;font-size:18px;color:${cor}">${r.media.toFixed(2)}%</div>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--gray);font-size:14px;padding:12px 0">Nenhuma OP finalizada ainda.</div>';
+
+  // ── OPs atrasadas (todas, com scroll) ─────────────────────────
+  const atrasadas = opsAtivas.filter(o => o.dataPrevisaoFinal && o.dataPrevisaoFinal < hoje)
+    .sort((a,b) => a.dataPrevisaoFinal.localeCompare(b.dataPrevisaoFinal));
+  document.getElementById('dash-atrasadas').innerHTML = atrasadas.length
+    ? atrasadas.map(o => `<div class="sit-row">
+        <div><div style="font-weight:600;font-size:13px">#${o.numero} ${o.produto?.substring(0,35)||''}</div>
+        <div style="font-size:11px;color:var(--gray)">${o.responsavel} · prev. ${o.dataPrevisaoFinal?.split('-').reverse().join('/')}</div></div>
+        <div style="font-size:13px;font-weight:700;color:var(--orange)">${fmtN(Math.max(0,(o.quantidade||0)-(o.entregue||0)))} un</div>
+      </div>`).join('')
+    : '<div style="color:var(--green);font-size:14px;padding:12px 0">✓ Nenhuma OP em atraso</div>';
+
+  // ── Pagamentos em aberto (todos, com scroll) ───────────────────
+  const pagPend = pags.filter(p => p.status === 'Em aberto')
+    .sort((a,b) => (a.data_entrega||'').localeCompare(b.data_entrega||''));
+  document.getElementById('dash-pagamentos').innerHTML = pagPend.length
+    ? pagPend.map(p => `<div class="sit-row">
+        <div><div style="font-weight:600;font-size:13px">${p.responsavel}</div>
+        <div style="font-size:11px;color:var(--gray)">${p.data_entrega?.split('-').reverse().join('/')}</div></div>
+        <div style="font-weight:700;color:var(--orange)">${fmt(p.valor_total||0)}</div>
+      </div>`).join('')
+    : '<div style="color:var(--green);font-size:14px;padding:12px 0">✓ Nenhum pagamento pendente</div>';
 }
 
 
