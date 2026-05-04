@@ -1832,7 +1832,7 @@ function showView(v) {
 // ─── NOTION API ───────────────────────────────────────────────────
 async function carregarResponsaveisLogin() {
   try {
-    const data = await apiGet('ordens_producao', '?select=responsavel&not.responsavel=is.null');
+    const data = await apiGet('ordens_producao', '?select=responsavel&responsavel=not.is.null&limit=500');
     const resps = [...new Set(
       (Array.isArray(data) ? data : []).map(r => r.responsavel).filter(Boolean)
     )].sort();
