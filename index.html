@@ -851,31 +851,19 @@
   .bar-chart-container { overflow-x: auto; padding-bottom: 4px; }
   .bar-chart {
     display: flex; align-items: flex-end; gap: 12px;
-    height: 120px; padding-bottom: 28px;
+    height: 140px; padding-bottom: 0;
     border-bottom: 1.5px solid var(--border);
     min-width: max-content;
     margin: 0 auto;
   }
-  .bar-col { display: flex; flex-direction: column; align-items: center; width: 48px; flex-shrink: 0; }
+  .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 48px; flex-shrink: 0; height: 140px; }
   .bar-fill {
     width: 32px; background: var(--teal); border-radius: 4px 4px 0 0;
     transition: height 0.4s ease; min-height: 3px; position: relative;
-    cursor: pointer;
+    cursor: pointer; flex-shrink: 0;
   }
   .bar-fill:hover { background: var(--teal-dark); }
-  .bar-tip {
-    display: none; position: absolute; bottom: calc(100% + 6px); left: 50%;
-    transform: translateX(-50%);
-    background: var(--charcoal); color: white; font-size: 11px; font-weight: 600;
-    padding: 3px 8px; border-radius: 6px; white-space: nowrap; z-index: 10;
-    pointer-events: none;
-  }
-  .bar-tip::after {
-    content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
-    border: 4px solid transparent; border-top-color: var(--charcoal);
-  }
-  .bar-fill:hover .bar-tip { display: block; }
-  .bar-label { font-size: 10px; color: var(--gray); margin-top: 8px; text-align: center; line-height: 1.3; }
+  .bar-label { font-size: 10px; color: var(--gray); margin-top: 6px; text-align: center; line-height: 1.3; flex-shrink: 0; }
 
 </style>
 </head>
@@ -2976,10 +2964,8 @@ function renderDashFiltros() {
           const [ano, mes] = m.split('-');
           const label = new Date(ano, mes-1).toLocaleDateString('pt-BR', {month:'short'}) + '/' + ano.slice(2);
           return `<div class="bar-col">
-            <div class="bar-fill" style="height:${h}px">
-              <div class="bar-tip">${fmtN(val)} un</div>
-            </div>
-            <div class="bar-label">${label}</div>
+            <div class="bar-fill" style="height:${h}px" title="${fmtN(val)} unidades"></div>
+            <div class="bar-label">${label}<br><span style="font-weight:700;color:var(--teal-dark)">${fmtN(val)}</span></div>
           </div>`;
         }).join('')
       : '<div style="color:var(--gray);font-size:13px;padding:20px">Sem dados de entrega ainda.</div>';
