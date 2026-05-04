@@ -1941,8 +1941,7 @@ async function loadOPs(forceRefresh = false) {
     }
 
     const pages = await fetchAllOPs();
-    const all = pages.map(parseOP).filter(Boolean);
-    allOPs = all.sort((a, b) => Number(b.numero) - Number(a.numero));
+    allOPs = pages.sort((a, b) => Number(b.numero) - Number(a.numero));
     saveCache(allOPs);
     renderStats();
     renderOPs();
@@ -1959,8 +1958,7 @@ async function loadOPs(forceRefresh = false) {
 async function refreshOPsBackground() {
   try {
     const pages = await fetchAllOPs();
-    const all = pages.map(parseOP).filter(Boolean);
-    allOPs = all.sort((a, b) => Number(b.numero) - Number(a.numero));
+    allOPs = pages.sort((a, b) => Number(b.numero) - Number(a.numero));
     saveCache(allOPs);
     renderStats();
     renderOPs();
