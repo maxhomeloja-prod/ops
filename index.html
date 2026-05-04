@@ -1814,6 +1814,8 @@ let currentOP = null;
 document.getElementById('logo-img').src = LOGO_URL;
   document.getElementById('logo-login').src = LOGO_URL;
   document.getElementById('logo-app-login').src = LOGO_URL;
+// Limpar cache antigo (migração Notion→Supabase)
+try { sessionStorage.removeItem('maxhome_ops_cache'); } catch(e) {}
 
 // ─── NAVIGATION ───────────────────────────────────────────────────
 function showView(v) {
@@ -1837,8 +1839,9 @@ async function carregarResponsaveisLogin() {
       (Array.isArray(data) ? data : []).map(r => r.responsavel).filter(Boolean)
     )].sort();
     const sel = document.getElementById('app-login-nome');
-    while (sel.options.length > 1) sel.remove(1);
-    resps.forEach(r => {
+    // Limpar apenas opções de operadores (manter placeholder e MAXHOME)
+    while (sel.options.length > 2) sel.remove(2);
+    resps.filter(r => r !== 'MAXHOME').forEach(r => {
       const opt = document.createElement('option');
       opt.value = r; opt.textContent = r;
       sel.appendChild(opt);
