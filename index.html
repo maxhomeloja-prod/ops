@@ -2868,20 +2868,29 @@ async function loadDashboard() {
     ).join('');
     document.getElementById('dash-resp-bars').innerHTML = respBars || '<div class="empty" style="padding:20px">Nenhuma OP ativa</div>';
 
-    // ── Situações ────────────────────────────────────────────────
-    const sits = {
-      'Em producao': {label:'Em Produção', color:'var(--blue)'},
-      'Nao iniciado': {label:'Não Iniciado', color:'var(--gray)'},
-      'Finalizado parcial': {label:'Finalizado Parcial', color:'var(--orange)'},
-      'Finalizado': {label:'Finalizado', color:'var(--green)'},
-      'Cancelado': {label:'Cancelado', color:'var(--red)'},
-    };
-    const sitRows = Object.entries(sits).map(([key, {label, color}]) => {
-      const count = ops.filter(o => o.situacao === key).length;
-      if (!count) return '';
-      return `<div class="sit-row"><span class="badge badge-${key.toLowerCase().replace(/ /g,'-')}">${label}</span><span class="sit-count" style="color:${color}">${count}</span></div>`;
-    }).join('');
-    document.getElementById('dash-situacoes').innerHTML = sitRows;
+    // ── Perda média por responsável ───────────────────────────────
+    const perdaMap = {};
+    ops.filter(o => o.situacao === 'Finalizado' && o.perda !== null && o.perda !== undefined)
+      .forEach(o => {
+        if (!perdaMap[o.responsavel]) perdaMap[o.responsavel] = { total: 0, count: 0 };
+        perdaMap[o.responsavel].total += parseFloat(o.perda);
+        perdaMap[o.responsavel].count += 1;
+      });
+    const perdaRows = Object.entries(perdaMap)
+      .map(([nome, {total, count}]) => ({ nome, media: total / count, count }))
+      .sort((a, b) => b.media - a.media);
+    document.getElementById('dash-perdas').innerHTML = perdaRows.length
+      ? perdaRows.map(r => {
+          const cor = r.media > 10 ? 'var(--red)' : r.media > 5 ? 'var(--orange)' : 'var(--green)';
+          return `<div class="sit-row">
+            <div>
+              <div style="font-weight:600;font-size:13px">${r.nome}</div>
+              <div style="font-size:11px;color:var(--gray)">${r.count} OP(s) finalizada(s)</div>
+            </div>
+            <div style="font-weight:700;font-size:18px;color:${cor}">${r.media.toFixed(2)}%</div>
+          </div>`;
+        }).join('')
+      : '<div style="color:var(--gray);font-size:14px;padding:12px 0">Nenhuma OP finalizada ainda.</div>';
 
     // ── OPs atrasadas ─────────────────────────────────────────────
     const atrasadas = opsAtivas.filter(o => o.dataPrevisaoFinal && o.dataPrevisaoFinal < hoje)
