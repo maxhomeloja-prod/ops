@@ -2871,8 +2871,10 @@ async function loadDashboard() {
     const data = await apiGet('registros_entrega', '?select=*&order=data_entrega.desc&limit=500');
     _dashPags = Array.isArray(data) ? data : [];
 
-    // Popular filtro responsável
-    const resps = [...new Set(allOPs.map(o => o.responsavel).filter(Boolean))].sort();
+    // Popular filtro responsável — union de OPs e registros_entrega
+    const respsOPs = allOPs.map(o => o.responsavel).filter(Boolean);
+    const respsPags = _dashPags.map(p => p.responsavel).filter(Boolean);
+    const resps = [...new Set([...respsOPs, ...respsPags])].sort();
     const selR = document.getElementById('dash-filter-resp');
     while (selR.options.length > 1) selR.remove(1);
     resps.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; selR.appendChild(o); });
