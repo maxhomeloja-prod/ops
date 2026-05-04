@@ -2122,7 +2122,7 @@ function openEntregaModal(id) {
 
 // ─── MODAL ────────────────────────────────────────────────────────
 function openModal(id) {
-  currentOP = allOPs.find(o => o.id === id);
+  currentOP = allOPs.find(o => String(o.id) === String(id));
   if (!currentOP) return;
   const op = currentOP;
   const aberto = Math.max(0, op.quantidade - op.entregue);
