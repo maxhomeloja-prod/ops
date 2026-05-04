@@ -1098,20 +1098,20 @@
           <div id="dash-resp-bars"></div>
         </div>
         <div class="dash-card">
-          <h3>📋 OPs por situação</h3>
-          <div id="dash-situacoes"></div>
+          <h3>📉 Perda média por responsável</h3>
+          <div id="dash-perdas"></div>
         </div>
       </div>
 
-      <!-- Linha 3: Top OPs em atraso + Pagamentos pendentes -->
+      <!-- Linha 3: OPs atrasadas + Pagamentos em aberto (todos) -->
       <div class="dash-row">
         <div class="dash-card">
           <h3>⚠️ OPs com previsão vencida</h3>
           <div id="dash-atrasadas"></div>
         </div>
-        <div class="dash-card">
+        <div class="dash-card" style="overflow:hidden">
           <h3>💰 Pagamentos em aberto</h3>
-          <div id="dash-pagamentos"></div>
+          <div id="dash-pagamentos" style="max-height:400px;overflow-y:auto"></div>
         </div>
       </div>
 
@@ -1160,6 +1160,7 @@
     <div class="modal-footer">
       <button class="btn btn-print" onclick="imprimirOP()">🖨️ Imprimir OP</button>
       <button class="btn btn-danger" id="btn-finalizar-op" style="display:none" onclick="finalizarOP()">✓ Finalizar OP</button>
+      <button class="btn" id="btn-excluir-op" style="display:none;background:#fee2e2;color:var(--red);border:none" onclick="excluirOP()">🗑 Excluir OP</button>
       <button class="btn btn-outline" onclick="closeModal()">Fechar</button>
     </div>
   </div>
@@ -2148,6 +2149,8 @@ function openModal(id) {
   document.getElementById('input-entrega').value = '';
   const btnFin = document.getElementById('btn-finalizar-op');
   if (btnFin) btnFin.style.display = (isMaster && op.situacao !== 'Finalizado' && op.situacao !== 'Cancelado') ? '' : 'none';
+  const btnExcluir = document.getElementById('btn-excluir-op');
+  if (btnExcluir) btnExcluir.style.display = isMaster ? '' : 'none';
   document.getElementById('op-modal').classList.add('open');
 }
 
@@ -2893,7 +2896,7 @@ async function loadDashboard() {
 
     // ── Pagamentos pendentes ──────────────────────────────────────
     const pagPend = pags.filter(p => p.status === 'Em aberto')
-      .sort((a,b) => a.data_entrega?.localeCompare(b.data_entrega||'')).slice(0,5);
+      .sort((a,b) => a.data_entrega?.localeCompare(b.data_entrega||''));
     document.getElementById('dash-pagamentos').innerHTML = pagPend.length
       ? pagPend.map(p => `<div class="sit-row">
           <div><div style="font-weight:600;font-size:13px">${p.responsavel}</div>
@@ -2908,6 +2911,28 @@ async function loadDashboard() {
     document.getElementById('dash-loading').innerHTML = '<div style="color:var(--red)">Erro ao carregar dashboard.</div>';
     console.error(e);
   }
+}
+
+
+async function excluirOP() {
+  if (!currentOP) return;
+  if (!confirm(`Excluir permanentemente a OP #${currentOP.numero}?\nEsta ação não pode ser desfeita.`)) return;
+  try {
+    const res = await fetch(`${API}/ordens_producao?id=eq.${currentOP.id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      allOPs = allOPs.filter(o => o.id !== currentOP.id);
+      try { sessionStorage.removeItem(CACHE_KEY); } catch(e) {}
+      closeModal();
+      renderOPs();
+      renderStats();
+      toast(`✓ OP #${currentOP.numero} excluída.`, 'success');
+    } else {
+      toast('Erro ao excluir OP.', 'error');
+    }
+  } catch(e) { toast('Erro ao excluir OP.', 'error'); }
 }
 
 async function finalizarOP() {
