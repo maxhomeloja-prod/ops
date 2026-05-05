@@ -1960,13 +1960,6 @@ async function carregarResponsaveisLogin() {
       sel.appendChild(opt);
     });
   } catch(e) { console.error('Erro ao carregar responsáveis:', e); }
-}
-      const opt = document.createElement('option');
-      opt.value = r; opt.textContent = r;
-      sel.appendChild(opt);
-    });
-  } catch(e) { console.error('Erro ao carregar responsáveis:', e); }
-}
 document.addEventListener('DOMContentLoaded', () => carregarResponsaveisLogin());
 
 function refreshOPs() {
