@@ -3058,7 +3058,7 @@ async function loadDashboard() {
   }
 }
 
-function renderDashFiltros() {
+async function renderDashFiltros() {
   const respF = document.getElementById('dash-filter-resp')?.value || '';
   const mesF  = document.getElementById('dash-filter-mes')?.value  || '';
   const hoje  = new Date().toISOString().split('T')[0];
