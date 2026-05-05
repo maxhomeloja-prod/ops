@@ -3083,6 +3083,7 @@ async function renderDashFiltros() {
   if (mesF)  pags = pags.filter(p => (p.data_entrega||'').startsWith(mesF));
 
   // ── KPIs ──────────────────────────────────────────────────────
+  let mediaDiaria = 0; // será calculado abaixo, declarado aqui para uso no template
   const opsAtivas = ops.filter(o => ['Em producao','Nao iniciado','Finalizado parcial'].includes(o.situacao));
   const totalAberto = opsAtivas.reduce((s,o) => s + Math.max(0,(o.quantidade||0)-(o.entregue||0)), 0);
   const opsAtrasadas = opsAtivas.filter(o => o.dataPrevisaoFinal && o.dataPrevisaoFinal < hoje).length;
@@ -3112,40 +3113,43 @@ async function renderDashFiltros() {
   `;
 
   // ── Produção interna: calcular média diária e quadro ─────────
-  const entInterna = await apiGet('maxhome_entregas', '?select=data_producao,valor_total,qtde&order=data_producao.desc&limit=500');
-  const entInt = Array.isArray(entInterna) ? entInterna : [];
-  const intFilt = entInt.filter(e => {
-    if (respF && respF !== 'PRODUCAO INTERNA') return false;
-    if (mesF && !(e.data_producao||'').startsWith(mesF)) return false;
-    return true;
-  });
-  // Agrupar por dia
-  const diasMap = {};
-  intFilt.forEach(e => {
-    const d = e.data_producao;
-    if (!d) return;
-    if (!diasMap[d]) diasMap[d] = {qtde: 0, valor: 0};
-    diasMap[d].qtde  += e.qtde || 0;
-    diasMap[d].valor += e.valor_total || 0;
-  });
-  const diasComLancamento = Object.keys(diasMap).length;
-  const totalInterno = intFilt.reduce((s,e) => s + (e.valor_total||0), 0);
-  const mediaDiaria = diasComLancamento > 0 ? totalInterno / diasComLancamento : 0;
-
-  // Quadro produção interna no dashboard
-  const quadroIntEl = document.getElementById('dash-producao-interna');
-  if (quadroIntEl) {
-    const diasOrdenados = Object.keys(diasMap).sort().reverse();
-    quadroIntEl.innerHTML = diasOrdenados.length
-      ? diasOrdenados.map(d => {
-          const dt = d.split('-').reverse().join('/');
-          return `<div class="sit-row">
-            <div><div style="font-weight:600;font-size:13px">${dt}</div>
-            <div style="font-size:11px;color:var(--gray)">${diasMap[d].qtde.toLocaleString('pt-BR')} unidades</div></div>
-            <div style="font-weight:700;color:var(--teal-dark)">${fmt(diasMap[d].valor)}</div>
-          </div>`;
-        }).join('')
-      : '<div style="color:var(--gray);font-size:13px;padding:12px 0">Sem lançamentos no período.</div>';
+  let mediaDiaria = 0;
+  try {
+    const entInterna = await apiGet('maxhome_entregas', '?select=data_producao,valor_total,qtde&order=data_producao.desc&limit=500');
+    const entInt = Array.isArray(entInterna) ? entInterna : [];
+    const intFilt = entInt.filter(e => {
+      if (respF && respF !== 'PRODUCAO INTERNA') return false;
+      if (mesF && !(e.data_producao||'').startsWith(mesF)) return false;
+      return true;
+    });
+    const diasMap = {};
+    intFilt.forEach(e => {
+      const d = e.data_producao;
+      if (!d) return;
+      if (!diasMap[d]) diasMap[d] = {qtde: 0, valor: 0};
+      diasMap[d].qtde  += e.qtde || 0;
+      diasMap[d].valor += e.valor_total || 0;
+    });
+    const diasComLancamento = Object.keys(diasMap).length;
+    const totalInterno = intFilt.reduce((s,e) => s + (e.valor_total||0), 0);
+    mediaDiaria = diasComLancamento > 0 ? totalInterno / diasComLancamento : 0; = document.getElementById('dash-producao-interna');
+    if (quadroIntEl) {
+      const diasOrdenados = Object.keys(diasMap).sort().reverse();
+      quadroIntEl.innerHTML = diasOrdenados.length
+        ? diasOrdenados.map(d => {
+            const dt = d.split('-').reverse().join('/');
+            return `<div class="sit-row">
+              <div><div style="font-weight:600;font-size:13px">${dt}</div>
+              <div style="font-size:11px;color:var(--gray)">${diasMap[d].qtde.toLocaleString('pt-BR')} unidades</div></div>
+              <div style="font-weight:700;color:var(--teal-dark)">${fmt(diasMap[d].valor)}</div>
+            </div>`;
+          }).join('')
+        : '<div style="color:var(--gray);font-size:13px;padding:12px 0">Sem lançamentos no período.</div>';
+    }
+  } catch(e) {
+    console.error('Erro ao carregar produção interna:', e);
+    const quadroIntEl = document.getElementById('dash-producao-interna');
+    if (quadroIntEl) quadroIntEl.innerHTML = '<div style="color:var(--gray);font-size:13px;padding:12px 0">Sem lançamentos ainda.</div>';
   }
 
   // ── Gráfico de produção por mês ────────────────────────────────
