@@ -3133,7 +3133,8 @@ async function renderDashFiltros() {
     });
     const diasComLancamento = Object.keys(diasMap).length;
     const totalInterno = intFilt.reduce((s,e) => s + (e.valor_total||0), 0);
-    mediaDiaria = diasComLancamento > 0 ? totalInterno / diasComLancamento : 0; = document.getElementById('dash-producao-interna');
+    mediaDiaria = diasComLancamento > 0 ? totalInterno / diasComLancamento : 0;
+    const quadroIntEl = document.getElementById('dash-producao-interna');
     if (quadroIntEl) {
       const diasOrdenados = Object.keys(diasMap).sort().reverse();
       quadroIntEl.innerHTML = diasOrdenados.length
