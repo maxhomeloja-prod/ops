@@ -7,6 +7,7 @@
     <select class="app-login-select" id="app-login-nome">
       <option value="">Selecione seu nome...</option>
       <option value="MAXHOME">MAXHOME (Administrador)</option>
+      <option value="PRODUCAO INTERNA">🏭 Produção Interna</option>
     </select>
     <input type="password" class="app-login-input" id="app-login-senha" placeholder="Senha" maxlength="10" onkeydown="if(event.key==='Enter')appLogin()">
     <div class="app-login-error" id="app-login-error">Usuário ou senha incorretos.</div>
@@ -1952,8 +1953,8 @@ async function carregarResponsaveisLogin() {
     )].sort();
     const sel = document.getElementById('app-login-nome');
     if (!sel) return;
-    // Limpar tudo exceto placeholder (índice 0) e MAXHOME (índice 1)
-    while (sel.options.length > 2) sel.remove(2);
+    // Limpar tudo exceto placeholder (0), MAXHOME (1) e PRODUCAO INTERNA (2)
+    while (sel.options.length > 3) sel.remove(3);
     resps.forEach(r => {
       const opt = document.createElement('option');
       opt.value = r; opt.textContent = r;
@@ -2408,7 +2409,7 @@ async function appLogin() {
 
   if (!nome) { err.textContent = 'Selecione seu nome.'; err.style.display = 'block'; return; }
 
-  const senhaCorreta = nome === 'MAXHOME' ? SENHAS['MAXHOME'] : SENHA_OPERADOR;
+  const senhaCorreta = nome === 'MAXHOME' ? SENHAS['MAXHOME'] : nome === 'PRODUCAO INTERNA' ? '0320' : SENHA_OPERADOR;
   if (senha !== senhaCorreta) { err.style.display = 'block'; return; }
 
   err.style.display = 'none';
@@ -3052,7 +3053,7 @@ async function loadDashboard() {
 
     document.getElementById('dash-loading').style.display = 'none';
     document.getElementById('dash-content').style.display = 'block';
-    renderDashFiltros();
+    await renderDashFiltros();
   } catch(e) {
     document.getElementById('dash-loading').innerHTML = '<div style="color:var(--red)">Erro ao carregar dashboard.</div>';
     console.error(e);
