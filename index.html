@@ -2519,12 +2519,14 @@ function showViewEntregas() {
 // ─── LOGIN ────────────────────────────────────────────────────────
 function popularLoginOps() {
   const sel = document.getElementById('login-nome');
-  // Limpar todas as opções exceto a primeira (placeholder)
   while (sel.options.length > 1) sel.remove(1);
   const resps = [...new Set(allOPs.map(o => o.responsavel).filter(Boolean))].sort();
-  resps.forEach(r => {
+  // Adicionar PRODUCAO INTERNA sempre
+  const todos = [...new Set([...resps, 'PRODUCAO INTERNA'])].sort();
+  todos.forEach(r => {
     const opt = document.createElement('option');
-    opt.value = r; opt.textContent = r;
+    opt.value = r;
+    opt.textContent = r === 'PRODUCAO INTERNA' ? '🏭 Produção Interna' : r;
     sel.appendChild(opt);
   });
 }
@@ -3029,6 +3031,9 @@ async function loadDashboard() {
   document.getElementById('dash-loading').style.display = 'block';
   document.getElementById('dash-content').style.display = 'none';
   try {
+    // Garantir que OPs estão carregadas
+    if (!allOPs.length) await loadOPs();
+
     const data = await apiGet('registros_entrega', '?select=*&order=data_entrega.desc&limit=500');
     _dashPags = Array.isArray(data) ? data : [];
 
