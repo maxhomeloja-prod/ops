@@ -2453,6 +2453,8 @@ async function appLogin() {
   if (navDash) navDash.style.display = isMaster ? '' : 'none';
   const navMaxOps = document.getElementById('nav-maxops');
   if (navMaxOps) navMaxOps.style.display = '';
+  const navCMO = document.getElementById('nav-ops');
+  if (navCMO) navCMO.style.display = (nome === 'PRODUCAO INTERNA') ? 'none' : '';
   const navMaxEnt = document.getElementById('nav-maxentregas');
   if (navMaxEnt) navMaxEnt.style.display = isMaster ? '' : 'none';
   // Master entra no dashboard
@@ -3113,7 +3115,6 @@ async function renderDashFiltros() {
   `;
 
   // ── Produção interna: calcular média diária e quadro ─────────
-  let mediaDiaria = 0;
   try {
     const entInterna = await apiGet('maxhome_entregas', '?select=data_producao,valor_total,qtde&order=data_producao.desc&limit=500');
     const entInt = Array.isArray(entInterna) ? entInterna : [];
