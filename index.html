@@ -2400,7 +2400,7 @@ let isMaster = false;
 const SENHAS = { 'MAXHOME': '0320' };
 const SENHA_OPERADOR = '1234';
 
-function appLogin() {
+async function appLogin() {
   const nome = document.getElementById('app-login-nome').value;
   const senha = document.getElementById('app-login-senha').value;
   const err = document.getElementById('app-login-error');
