@@ -2538,7 +2538,7 @@ function popularLoginOps() {
   });
 }
 
-function fazerLogin() {
+async function fazerLogin() {
   const nome = document.getElementById('login-nome').value;
   const senha = document.getElementById('login-senha').value;
   const err = document.getElementById('login-error');
@@ -2551,12 +2551,13 @@ function fazerLogin() {
   document.getElementById('entrega-interface').style.display = 'block';
   document.getElementById('user-nome-display').textContent = nome;
   document.getElementById('user-avatar').textContent = nome.charAt(0).toUpperCase();
-  // Carregar preços internos se for PRODUCAO INTERNA
-  if (nome === 'PRODUCAO INTERNA' && Object.keys(_precosInternos).length === 0) {
-    apiGet('tabela_precos_interna', '?select=sku,preco&limit=1000').then(precData => {
+  // Carregar preços internos se for PRODUCAO INTERNA — aguardar antes de renderizar
+  if (nome === 'PRODUCAO INTERNA') {
+    try {
+      const precData = await apiGet('tabela_precos_interna', '?select=sku,preco&limit=1000');
       _precosInternos = {};
       (Array.isArray(precData) ? precData : []).forEach(r => { _precosInternos[r.sku] = r.preco; });
-    }).catch(e => console.error('Erro preços internos:', e));
+    } catch(e) { console.error('Erro preços internos:', e); }
   }
   renderEntregaMobile();
 }
@@ -2654,7 +2655,7 @@ function adicionarCarrinho() {
   const aberto = opSelecionada.semOP ? 99999 : (opSelecionada.quantidade - opSelecionada.entregue);
   if (!qtd || qtd <= 0) { toast('Informe uma quantidade válida.', 'error'); return; }
   if (!opSelecionada.semOP && qtd > aberto) { toast(`Máximo disponível: ${aberto} unidades.`, 'error'); return; }
-  const preco = getPreco(opSelecionada.sku);
+  const preco = (usuarioLogado === 'PRODUCAO INTERNA') ? getPrecoInterno(opSelecionada.sku) : getPreco(opSelecionada.sku);
   // Verificar se já tem essa OP no carrinho
   const existe = carrinho.find(i => i.opId === opSelecionada.id && !opSelecionada.semOP);
   if (existe) {
@@ -3554,7 +3555,7 @@ function confirmarQtdSheet() {
   if (!qtd || qtd <= 0) { toast('Informe uma quantidade válida.', 'error'); return; }
   const aberto = opSelecionada.semOP ? 99999 : (opSelecionada.quantidade - opSelecionada.entregue);
   if (!opSelecionada.semOP && qtd > aberto) { toast(`Máximo: ${aberto} unidades.`, 'error'); return; }
-  const preco = getPreco(opSelecionada.sku);
+  const preco = (usuarioLogado === 'PRODUCAO INTERNA') ? getPrecoInterno(opSelecionada.sku) : getPreco(opSelecionada.sku);
   const existe = carrinho.find(i => i.opId === opSelecionada.id && !opSelecionada.semOP);
   if (existe) { existe.qtd += qtd; }
   else {
