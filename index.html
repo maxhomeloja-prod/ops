@@ -866,6 +866,37 @@
   .bar-fill:hover { background: var(--teal-dark); }
   .bar-label { font-size: 10px; color: var(--gray); margin-top: 6px; text-align: center; line-height: 1.3; flex-shrink: 0; }
 
+
+  /* ─── MODAL MAX ENTREGAS ─── */
+  #me-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 500;
+    align-items: center; justify-content: center;
+  }
+  #me-modal-overlay.open { display: flex; }
+  #me-modal {
+    background: var(--white); border-radius: 16px;
+    width: 100%; max-width: 480px; max-height: 90vh;
+    overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    margin: 20px;
+  }
+  .me-modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+  }
+  .me-modal-title { font-size: 17px; font-weight: 700; color: var(--charcoal); }
+  .me-modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .me-modal-footer {
+    padding: 16px 24px; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; justify-content: flex-end;
+  }
+  .me-field label { display: block; font-size: 11px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .me-field input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--charcoal); outline: none; box-sizing: border-box; }
+  .me-field input:focus { border-color: var(--teal); }
+  .me-field input[readonly] { background: var(--light); color: var(--gray); }
+  .btn-danger-outline { padding: 10px 18px; border: 1.5px solid var(--red); border-radius: 8px; background: transparent; color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-danger-outline:hover { background: #fee2e2; }
+
 </style>
 </head>
 <body>
@@ -982,7 +1013,7 @@
         <!-- Cards de OPs e resultados de busca -->
         <div class="ops-result" id="ops-result"></div>
         <div class="op-qtd-row" id="qtd-row" style="display:none">
-            <input type="number" class="op-qtd-input" id="qtd-input" placeholder="Qtd" min="1">
+            <input type="number" class="op-qtd-input" id="qtd-input" placeholder="Qtd" min="1" onkeydown="if(event.key==='Enter')adicionarCarrinho()">
             <button class="btn btn-primary" onclick="adicionarCarrinho()">Adicionar ao carrinho</button>
             <button class="btn btn-outline" onclick="limparBusca()">Cancelar</button>
           </div>
@@ -1043,7 +1074,7 @@
     <div class="qtd-sheet-handle"></div>
     <div class="qtd-sheet-produto" id="qtd-sheet-produto">—</div>
     <div class="qtd-sheet-info" id="qtd-sheet-info">—</div>
-    <input type="number" class="qtd-sheet-input" id="qtd-sheet-input" placeholder="0" min="1" inputmode="numeric">
+    <input type="number" class="qtd-sheet-input" id="qtd-sheet-input" placeholder="0" min="1" inputmode="numeric" onkeydown="if(event.key==='Enter')confirmarQtdSheet()">
     <button class="btn btn-primary qtd-sheet-btn" onclick="confirmarQtdSheet()">Adicionar ao Carrinho</button>
   </div>
 
@@ -1221,6 +1252,49 @@
         <tbody id="me-tbody"></tbody>
       </table>
       <div class="empty" id="me-empty" style="display:none">Nenhum registro encontrado.</div>
+    </div>
+  </div>
+
+
+  <!-- MODAL MAX ENTREGAS -->
+  <div id="me-modal-overlay" onclick="fecharModalME(event)">
+    <div id="me-modal">
+      <div class="me-modal-header">
+        <div class="me-modal-title">✏️ Editar Registro</div>
+        <button class="modal-close" onclick="fecharModalME()">✕</button>
+      </div>
+      <div class="me-modal-body">
+        <input type="hidden" id="me-edit-id">
+        <div class="me-field">
+          <label>Data de Produção</label>
+          <input type="date" id="me-edit-data">
+        </div>
+        <div class="me-field">
+          <label>SKU</label>
+          <input type="text" id="me-edit-sku" oninput="recalcMEPreco()">
+        </div>
+        <div class="me-field">
+          <label>Quantidade</label>
+          <input type="number" id="me-edit-qtde" min="1" oninput="recalcMEPreco()">
+        </div>
+        <div class="me-field">
+          <label>Preço Unitário</label>
+          <input type="number" id="me-edit-preco" step="0.01" oninput="recalcMETotal()">
+        </div>
+        <div class="me-field">
+          <label>Valor Total</label>
+          <input type="text" id="me-edit-total" readonly>
+        </div>
+        <div class="me-field">
+          <label>OP Vinculada</label>
+          <input type="text" id="me-edit-op" readonly>
+        </div>
+      </div>
+      <div class="me-modal-footer">
+        <button class="btn-danger-outline" onclick="excluirRegistroME()">🗑 Excluir</button>
+        <button class="btn btn-outline" onclick="fecharModalME()">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarEdicaoME()">Salvar</button>
+      </div>
     </div>
   </div>
 
@@ -2756,9 +2830,11 @@ async function confirmarEntrega() {
   if (usuarioLogado === 'PRODUCAO INTERNA') {
     try {
       const dataProducao = document.getElementById('conf-data-producao')?.value || new Date().toISOString().split('T')[0];
+      let totalPI = 0;
       for (const item of carrinho) {
         const precoUnit = getPrecoInterno(item.sku) || 0;
         const valorTotal = precoUnit * item.qtd;
+        totalPI += valorTotal;
         await apiPost('maxhome_entregas', {
           data_producao: dataProducao,
           sku: item.sku.toUpperCase(),
@@ -2779,8 +2855,9 @@ async function confirmarEntrega() {
         }
       }
       try { sessionStorage.removeItem(CACHE_KEY); } catch(e) {}
+      const obsPI = document.getElementById('conf-obs')?.value || '';
       fecharConfirmacao();
-      gerarPDFEntrega();
+      gerarPDFEntrega(obsPI, totalPI);
       carrinho = [];
       renderCarrinho();
       atualizarFAB();
@@ -3418,37 +3495,84 @@ function renderMaxEntregas() {
   }).join('');
 }
 
-// Modal de edição Max Entregas
+// Modal ME substituído acima
+
+
+// ─── MODAL MAX ENTREGAS ────────────────────────────────────────────
 function abrirModalMaxEntrega(id) {
   const r = _maxEntregas.find(x => x.id === id);
   if (!r) return;
+
+  document.getElementById('me-edit-id').value = id;
+  document.getElementById('me-edit-data').value = r.data_producao || '';
+  document.getElementById('me-edit-sku').value = r.sku || '';
+  document.getElementById('me-edit-qtde').value = r.qtde || '';
+  document.getElementById('me-edit-preco').value = r.preco_unitario || '';
+  document.getElementById('me-edit-total').value = r.valor_total ? 'R$ ' + r.valor_total.toFixed(2).replace('.',',') : '—';
+  document.getElementById('me-edit-op').value = r.op_id ? '#' + String(r.op_id).padStart(4,'0') : 'Sem OP';
+  document.getElementById('me-modal-overlay').classList.add('open');
+}
+
+function fecharModalME(e) {
+  if (e && e.target !== document.getElementById('me-modal-overlay')) return;
+  document.getElementById('me-modal-overlay').classList.remove('open');
+}
+
+function recalcMEPreco() {
+  const sku = document.getElementById('me-edit-sku').value;
+  const qtde = parseInt(document.getElementById('me-edit-qtde').value) || 0;
+  const preco = getPrecoInterno(sku) || parseFloat(document.getElementById('me-edit-preco').value) || 0;
+  document.getElementById('me-edit-preco').value = preco || '';
+  const total = preco * qtde;
+  document.getElementById('me-edit-total').value = total ? 'R$ ' + total.toFixed(2).replace('.',',') : '—';
+}
+
+function recalcMETotal() {
+  const qtde = parseInt(document.getElementById('me-edit-qtde').value) || 0;
+  const preco = parseFloat(document.getElementById('me-edit-preco').value) || 0;
+  const total = preco * qtde;
+  document.getElementById('me-edit-total').value = total ? 'R$ ' + total.toFixed(2).replace('.',',') : '—';
+}
+
+async function salvarEdicaoME() {
   const senha = prompt('Senha do administrador:');
   if (senha !== '0320') { toast('Senha incorreta.', 'error'); return; }
-  const fmt = n => n?.toFixed(2).replace('.',',') || '';
-  const novaData  = prompt('Data de produção (AAAA-MM-DD):', r.data_producao || '');
-  if (novaData === null) return;
-  const novaSku   = prompt('SKU:', r.sku || '');
-  if (novaSku === null) return;
-  const novaQtde  = prompt('Quantidade:', r.qtde || '');
-  if (novaQtde === null) return;
-  const novaQtdeN = parseInt(novaQtde);
-  if (isNaN(novaQtdeN) || novaQtdeN <= 0) { toast('Quantidade inválida.', 'error'); return; }
-  const precoUnit = getPrecoInterno(novaSku) || r.preco_unitario || 0;
-  const novoTotal = precoUnit * novaQtdeN;
-  apiPatch('maxhome_entregas', `?id=eq.${id}`, {
-    data_producao: novaData,
-    sku: novaSku.toUpperCase(),
-    qtde: novaQtdeN,
-    preco_unitario: precoUnit,
-    valor_total: novoTotal
-  }).then(() => {
-    const idx = _maxEntregas.findIndex(x => x.id === id);
-    if (idx >= 0) {
-      _maxEntregas[idx] = { ..._maxEntregas[idx], data_producao: novaData, sku: novaSku.toUpperCase(), qtde: novaQtdeN, preco_unitario: precoUnit, valor_total: novoTotal };
-    }
-    renderMaxEntregas();
-    toast('✓ Registro atualizado.', 'success');
+
+  const id = parseInt(document.getElementById('me-edit-id').value);
+  const data = document.getElementById('me-edit-data').value;
+  const sku  = document.getElementById('me-edit-sku').value.toUpperCase().trim();
+  const qtde = parseInt(document.getElementById('me-edit-qtde').value);
+  const preco = parseFloat(document.getElementById('me-edit-preco').value) || 0;
+  const total = preco * qtde;
+
+  if (!data || !sku || !qtde) { toast('Preencha todos os campos.', 'error'); return; }
+
+  await apiPatch('maxhome_entregas', `?id=eq.${id}`, {
+    data_producao: data, sku, qtde,
+    preco_unitario: preco, valor_total: total
   });
+
+  const idx = _maxEntregas.findIndex(x => x.id === id);
+  if (idx >= 0) _maxEntregas[idx] = { ..._maxEntregas[idx], data_producao: data, sku, qtde, preco_unitario: preco, valor_total: total };
+
+  document.getElementById('me-modal-overlay').classList.remove('open');
+  renderMaxEntregas();
+  toast('✓ Registro atualizado.', 'success');
+}
+
+async function excluirRegistroME() {
+  const id = parseInt(document.getElementById('me-edit-id').value);
+  if (!confirm('Excluir este registro permanentemente?')) return;
+
+  const res = await fetch(`${API}/maxhome_entregas?id=eq.${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } });
+  if (res.ok) {
+    _maxEntregas = _maxEntregas.filter(x => x.id !== id);
+    document.getElementById('me-modal-overlay').classList.remove('open');
+    renderMaxEntregas();
+    toast('✓ Registro excluído.', 'success');
+  } else {
+    toast('Erro ao excluir.', 'error');
+  }
 }
 
 // ─── MOBILE DETECTION ─────────────────────────────────────────────
