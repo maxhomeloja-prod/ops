@@ -2528,7 +2528,6 @@ function popularLoginOps() {
   const sel = document.getElementById('login-nome');
   while (sel.options.length > 1) sel.remove(1);
   const resps = [...new Set(allOPs.map(o => o.responsavel).filter(Boolean))].sort();
-  // Adicionar PRODUCAO INTERNA sempre
   const todos = [...new Set([...resps, 'PRODUCAO INTERNA'])].sort();
   todos.forEach(r => {
     const opt = document.createElement('option');
@@ -2547,6 +2546,8 @@ async function fazerLogin() {
   if (senha !== senhaEsperada) { err.style.display = 'block'; return; }
   err.style.display = 'none';
   usuarioLogado = nome;
+  // Limpar preços internos ao trocar de usuário
+  if (nome !== 'PRODUCAO INTERNA') _precosInternos = {};
   document.getElementById('entrega-login').style.display = 'none';
   document.getElementById('entrega-interface').style.display = 'block';
   document.getElementById('user-nome-display').textContent = nome;
