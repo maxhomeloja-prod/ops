@@ -2496,24 +2496,29 @@ function appLogout() {
 }
 
 // Quando abre aba de entregas — se já logado como operador, pular login interno
-function showViewEntregas() {
+async function showViewEntregas() {
   if (!appUsuario) return;
   document.getElementById('entrega-login').style.display = 'none';
   document.getElementById('entrega-interface').style.display = 'block';
   document.getElementById('user-nome-display').textContent = appUsuario;
   document.getElementById('user-avatar').textContent = appUsuario.charAt(0).toUpperCase();
-  // Master pode escolher operador para filtrar cards, ou ver todos
   if (isMaster) {
     popularLoginOps();
-    // se não escolheu operador interno, mostra seletor
     if (!usuarioLogado) {
       document.getElementById('entrega-login').style.display = 'block';
       document.getElementById('entrega-interface').style.display = 'none';
       return;
     }
   } else {
-    // Operador comum: usar o próprio login
     usuarioLogado = appUsuario;
+  }
+  // Carregar preços internos se for PRODUCAO INTERNA e ainda não carregados
+  if ((usuarioLogado === 'PRODUCAO INTERNA' || appUsuario === 'PRODUCAO INTERNA') && Object.keys(_precosInternos).length === 0) {
+    try {
+      const precData = await apiGet('tabela_precos_interna', '?select=sku,preco&limit=1000');
+      _precosInternos = {};
+      (Array.isArray(precData) ? precData : []).forEach(r => { _precosInternos[r.sku] = r.preco; });
+    } catch(e) { console.error('Erro ao carregar preços internos:', e); }
   }
   renderEntregaMobile();
 }
@@ -2546,6 +2551,13 @@ function fazerLogin() {
   document.getElementById('entrega-interface').style.display = 'block';
   document.getElementById('user-nome-display').textContent = nome;
   document.getElementById('user-avatar').textContent = nome.charAt(0).toUpperCase();
+  // Carregar preços internos se for PRODUCAO INTERNA
+  if (nome === 'PRODUCAO INTERNA' && Object.keys(_precosInternos).length === 0) {
+    apiGet('tabela_precos_interna', '?select=sku,preco&limit=1000').then(precData => {
+      _precosInternos = {};
+      (Array.isArray(precData) ? precData : []).forEach(r => { _precosInternos[r.sku] = r.preco; });
+    }).catch(e => console.error('Erro preços internos:', e));
+  }
   renderEntregaMobile();
 }
 
