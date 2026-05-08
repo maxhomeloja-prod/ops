@@ -3179,8 +3179,9 @@ async function renderDashFiltros() {
   if (respF) pags = pags.filter(p => p.responsavel === respF);
   if (mesF)  pags = pags.filter(p => (p.data_entrega||'').startsWith(mesF));
 
+
+
   // ── KPIs ──────────────────────────────────────────────────────
-  let mediaDiaria = 0; // será calculado abaixo, declarado aqui para uso no template
   const opsAtivas = ops.filter(o => ['Em producao','Nao iniciado','Finalizado parcial'].includes(o.situacao));
   const totalAberto = opsAtivas.reduce((s,o) => s + Math.max(0,(o.quantidade||0)-(o.entregue||0)), 0);
   const opsAtrasadas = opsAtivas.filter(o => o.dataPrevisaoFinal && o.dataPrevisaoFinal < hoje).length;
@@ -3200,14 +3201,6 @@ async function renderDashFiltros() {
     }
   });
 
-  document.getElementById('dash-kpis').innerHTML = `
-    <div class="kpi-card blue"><div class="kpi-label">Total de OPs</div><div class="kpi-value">${ops.length}</div><div class="kpi-sub">${opsAtivas.length} ativas</div></div>
-    <div class="kpi-card"><div class="kpi-label">Unidades em aberto</div><div class="kpi-value">${fmtN(totalAberto)}</div><div class="kpi-sub">a produzir</div></div>
-    <div class="kpi-card green"><div class="kpi-label">Total produzido</div><div class="kpi-value">${fmtN(totalProduzido)}</div><div class="kpi-sub">unidades entregues</div></div>
-    <div class="kpi-card orange"><div class="kpi-label">OPs atrasadas</div><div class="kpi-value" style="color:var(--orange)">${opsAtrasadas}</div><div class="kpi-sub">previsão vencida</div></div>
-    <div class="kpi-card red"><div class="kpi-label">A pagar</div><div class="kpi-value" style="color:var(--orange)">${fmt(pagAberto)}</div><div class="kpi-sub">em aberto</div></div>
-    ${mediaDiaria > 0 ? `<div class="kpi-card purple"><div class="kpi-label">Média diária interna</div><div class="kpi-value" style="color:#7c3aed">${fmt(mediaDiaria)}</div><div class="kpi-sub">por dia com lançamento</div></div>` : ''}
-  `;
 
   // ── Produção interna: calcular média diária e quadro ─────────
   try {
@@ -3248,6 +3241,524 @@ async function renderDashFiltros() {
     const quadroIntEl = document.getElementById('dash-producao-interna');
     if (quadroIntEl) quadroIntEl.innerHTML = '<div style="color:var(--gray);font-size:13px;padding:12px 0">Sem lançamentos ainda.</div>';
   }
+
+  document.getElementById('dash-kpis').innerHTML = `
+    <div class="kpi-card blue"><div class="kpi-label">Total de OPs</div><div class="kpi-value">${ops.length}</div><div class="kpi-sub">${opsAtivas.length} ativas</div></div>
+    <div class="kpi-card"><div class="kpi-label">Unidades em aberto</div><div class="kpi-value">${fmtN(totalAberto)}</div><div class="kpi-sub">a produzir</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Total produzido</div><div class="kpi-value">${fmtN(totalProduzido)}</div><div class="kpi-sub">unidades entregues</div></div>
+    <div class="kpi-card orange"><div class="kpi-label">OPs atrasadas</div><div class="kpi-value" style="color:var(--orange)">${opsAtrasadas}</div><div class="kpi-sub">previsão vencida</div></div>
+    <div class="kpi-card red"><div class="kpi-label">A pagar</div><div class="kpi-value" style="color:var(--orange)">${fmt(pagAberto)}</div><div class="kpi-sub">em aberto</div></div>
+    ${mediaDiaria > 0 ? `<div class="kpi-card purple"><div class="kpi-label">Média diária interna</div><div class="kpi-value" style="color:#7c3aed">${fmt(mediaDiaria)}</div><div class="kpi-sub">por dia com lançamento</div></div>` : ''}
+  `;
+
+
+  // ── Gráfico de produção por mês ────────────────────────────────
+  const prodPorMes = {};
+  _dashPags.filter(p => !respF || p.responsavel === respF).forEach(p => {
+    const mes = p.data_entrega?.substring(0,7);
+    if (!mes) return;
+    if (!prodPorMes[mes]) prodPorMes[mes] = 0;
+    if (p.itens) {
+      const matches = [...p.itens.matchAll(/x(\d+)/gi)];
+      matches.forEach(m => { prodPorMes[mes] += parseInt(m[1]); });
+    }
+  });
+  const mesesGraf = Object.keys(prodPorMes).sort();
+  const maxProd   = Math.max(...Object.values(prodPorMes), 1);
+  const chartEl   = document.getElementById('dash-bar-chart');
+  if (chartEl) {
+    chartEl.innerHTML = mesesGraf.length
+      ? mesesGraf.map(m => {
+          const val = prodPorMes[m];
+          const h   = Math.max(4, (val / maxProd) * 140);
+          const [ano, mes] = m.split('-');
+          const label = new Date(ano, mes-1).toLocaleDateString('pt-BR', {month:'short'}) + '/' + ano.slice(2);
+          return `<div class="bar-col">
+            <div class="bar-fill" style="height:${h}px" title="${fmtN(val)} unidades"></div>
+            <div class="bar-label">${label}<br><span style="font-weight:700;color:var(--teal-dark)">${fmtN(val)}</span></div>
+          </div>`;
+        }).join('')
+      : '<div style="color:var(--gray);font-size:13px;padding:20px">Sem dados de entrega ainda.</div>';
+  }
+
+  // ── Barras por responsável ─────────────────────────────────────
+  const respMap = {};
+  opsAtivas.forEach(o => {
+    if (!o.responsavel) return;
+    if (!respMap[o.responsavel]) respMap[o.responsavel] = 0;
+    respMap[o.responsavel] += Math.max(0,(o.quantidade||0)-(o.entregue||0));
+  });
+  const maxVal  = Math.max(...Object.values(respMap), 1);
+  const respBars = Object.entries(respMap).sort((a,b) => b[1]-a[1]).map(([nome, val]) =>
+    `<div class="resp-bar-row">
+      <div class="resp-bar-name">${nome}</div>
+      <div class="resp-bar-wrap"><div class="resp-bar-fill" style="width:${(val/maxVal*100).toFixed(0)}%"></div></div>
+      <div class="resp-bar-val">${fmtN(val)} un</div>
+    </div>`
+  ).join('');
+  document.getElementById('dash-resp-bars').innerHTML = respBars || '<div class="empty" style="padding:20px">Nenhuma OP ativa</div>';
+
+  // ── Perda média por responsável ────────────────────────────────
+  const perdaMap = {};
+  ops.filter(o => o.situacao === 'Finalizado' && o.perda != null)
+    .forEach(o => {
+      if (!perdaMap[o.responsavel]) perdaMap[o.responsavel] = {total:0, count:0};
+      perdaMap[o.responsavel].total += parseFloat(o.perda);
+      perdaMap[o.responsavel].count += 1;
+    });
+  const perdaRows = Object.entries(perdaMap)
+    .map(([nome,{total,count}]) => ({nome, media: total/count, count}))
+    .sort((a,b) => b.media - a.media);
+  document.getElementById('dash-perdas').innerHTML = perdaRows.length
+    ? perdaRows.map(r => {
+        const cor = r.media > 10 ? 'var(--red)' : r.media > 5 ? 'var(--orange)' : 'var(--green)';
+        return `<div class="sit-row">
+          <div><div style="font-weight:600;font-size:13px">${r.nome}</div>
+          <div style="font-size:11px;color:var(--gray)">${r.count} OP(s) finalizada(s)</div></div>
+          <div style="font-weight:700;font-size:18px;color:${cor}">${r.media.toFixed(2)}%</div>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--gray);font-size:14px;padding:12px 0">Nenhuma OP finalizada ainda.</div>';
+
+  // ── OPs atrasadas (todas, com scroll) ─────────────────────────
+  const atrasadas = opsAtivas.filter(o => o.dataPrevisaoFinal && o.dataPrevisaoFinal < hoje)
+    .sort((a,b) => a.dataPrevisaoFinal.localeCompare(b.dataPrevisaoFinal));
+  document.getElementById('dash-atrasadas').innerHTML = atrasadas.length
+    ? atrasadas.map(o => `<div class="sit-row">
+        <div><div style="font-weight:600;font-size:13px">#${o.numero} ${o.produto?.substring(0,35)||''}</div>
+        <div style="font-size:11px;color:var(--gray)">${o.responsavel} · prev. ${o.dataPrevisaoFinal?.split('-').reverse().join('/')}</div></div>
+        <div style="font-size:13px;font-weight:700;color:var(--orange)">${fmtN(Math.max(0,(o.quantidade||0)-(o.entregue||0)))} un</div>
+      </div>`).join('')
+    : '<div style="color:var(--green);font-size:14px;padding:12px 0">✓ Nenhuma OP em atraso</div>';
+
+  // ── Pagamentos em aberto (todos, com scroll) ───────────────────
+  const pagPend = pags.filter(p => p.status === 'Em aberto')
+    .sort((a,b) => (a.data_entrega||'').localeCompare(b.data_entrega||''));
+  document.getElementById('dash-pagamentos').innerHTML = pagPend.length
+    ? pagPend.map(p => `<div class="sit-row">
+        <div><div style="font-weight:600;font-size:13px">${p.responsavel}</div>
+        <div style="font-size:11px;color:var(--gray)">${p.data_entrega?.split('-').reverse().join('/')}</div></div>
+        <div style="font-weight:700;color:var(--orange)">${fmt(p.valor_total||0)}</div>
+      </div>`).join('')
+    : '<div style="color:var(--green);font-size:14px;padding:12px 0">✓ Nenhum pagamento pendente</div>';
+}
+
+
+async function excluirOP() {
+  if (!currentOP) return;
+  if (!confirm(`Excluir permanentemente a OP #${currentOP.numero}?\nEsta ação não pode ser desfeita.`)) return;
+  try {
+    const res = await fetch(`${API}/ordens_producao?id=eq.${currentOP.id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      allOPs = allOPs.filter(o => o.id !== currentOP.id);
+      try { sessionStorage.removeItem(CACHE_KEY); } catch(e) {}
+      closeModal();
+      renderOPs();
+      renderStats();
+      toast(`✓ OP #${currentOP.numero} excluída.`, 'success');
+    } else {
+      toast('Erro ao excluir OP.', 'error');
+    }
+  } catch(e) { toast('Erro ao excluir OP.', 'error'); }
+}
+
+async function finalizarOP() {
+  if (!currentOP) return;
+  const perda = currentOP.quantidade > 0
+    ? Math.max(0, (currentOP.quantidade - currentOP.entregue) / currentOP.quantidade * 100)
+    : 0;
+  const perdaFmt = perda.toFixed(2);
+  if (!confirm(`Finalizar OP #${currentOP.numero}?\nPerda calculada: ${perdaFmt}%`)) return;
+  try {
+    await apiPatch('ordens_producao', `?id=eq.${currentOP.id}`, {
+      situacao: 'Finalizado',
+      perda: parseFloat(perdaFmt)
+    });
+    currentOP.situacao = 'Finalizado';
+    currentOP.perda = parseFloat(perdaFmt);
+    document.getElementById('modal-badge').innerHTML = badgeHTML('Finalizado');
+    renderOPs(); renderStats();
+    toast(`✓ OP finalizada — perda: ${perdaFmt}%`, 'success');
+  } catch(e) { toast('Erro ao finalizar OP.', 'error'); }
+}
+
+
+// ─── MAX OPS ──────────────────────────────────────────────────────
+function renderMaxOps() {
+  const sitFilt = document.getElementById('filter-situacao-maxops')?.value || '';
+  const busca   = (document.getElementById('search-maxops')?.value || '').toLowerCase();
+
+  const ops = allOPs.filter(o => {
+    if (o.responsavel !== 'PRODUCAO INTERNA') return false;
+    if (sitFilt && o.situacao !== sitFilt) return false;
+    if (busca && !o.produto.toLowerCase().includes(busca) && !o.sku.toLowerCase().includes(busca)) return false;
+    return true;
+  });
+
+  document.getElementById('maxops-loading').style.display = 'none';
+  const tbody = document.getElementById('maxops-tbody');
+  if (!ops.length) {
+    document.getElementById('maxops-table').style.display = 'none';
+    document.getElementById('maxops-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('maxops-table').style.display = 'table';
+  document.getElementById('maxops-empty').style.display = 'none';
+
+  const fmtDate = d => d ? d.split('-').reverse().join('/') : '—';
+  tbody.innerHTML = ops.map(op => {
+    const pct = op.quantidade > 0 ? Math.round((op.entregue / op.quantidade) * 100) : 0;
+    return `<tr onclick="openModal('${op.id}')">
+      <td><div class="op-num">#${op.numero}</div></td>
+      <td><div class="op-produto">${op.produto||'—'}</div><div class="op-sku">${op.sku||''}</div></td>
+      <td>${op.responsavel||'—'}</td>
+      <td>${op.quantidade?.toLocaleString('pt-BR')||0}</td>
+      <td><div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div><small>${op.entregue||0}/${op.quantidade||0}</small></td>
+      <td>${badgeHTML(op.situacao)}</td>
+      <td>${fmtDate(op.dataPrevisaoFinal)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── MAX ENTREGAS ──────────────────────────────────────────────────
+let _maxEntregas = [];
+let _precosInternos = {};
+
+async function loadMaxEntregas() {
+  document.getElementById('me-loading').style.display = 'block';
+  document.getElementById('me-table').style.display = 'none';
+  document.getElementById('me-empty').style.display = 'none';
+  try {
+    const [entData, precData] = await Promise.all([
+      apiGet('maxhome_entregas', '?select=*&order=data_producao.desc&limit=1000'),
+      apiGet('tabela_precos_interna', '?select=sku,preco&limit=1000')
+    ]);
+    _maxEntregas = Array.isArray(entData) ? entData : [];
+    _precosInternos = {};
+    (Array.isArray(precData) ? precData : []).forEach(r => { _precosInternos[r.sku] = r.preco; });
+    renderMaxEntregas();
+  } catch(e) {
+    document.getElementById('me-loading').innerHTML = '<div style="color:var(--red)">Erro ao carregar.</div>';
+  }
+}
+
+function getPrecoInterno(sku) {
+  if (!sku) return null;
+  // Remover sufixos _01_vb, _01_mo, _01_lj e similares
+  const base = sku.replace(/_\d+_(vb|mo|lj|MO|VB|LJ)$/i, '').toUpperCase();
+  for (const [k, v] of Object.entries(_precosInternos)) {
+    if (k.toUpperCase() === base) return v;
+  }
+  return null;
+}
+
+function renderMaxEntregas() {
+  const dataIni = document.getElementById('me-filter-data-ini')?.value || '';
+  const dataFim = document.getElementById('me-filter-data-fim')?.value || '';
+  const skuF    = (document.getElementById('me-filter-sku')?.value || '').toLowerCase();
+
+  let rows = _maxEntregas.filter(r => {
+    if (dataIni && r.data_producao < dataIni) return false;
+    if (dataFim && r.data_producao > dataFim) return false;
+    if (skuF && !(r.sku||'').toLowerCase().includes(skuF)) return false;
+    return true;
+  });
+
+  const totalQtde  = rows.reduce((s,r) => s + (r.qtde||0), 0);
+  const totalValor = rows.reduce((s,r) => s + (r.valor_total||0), 0);
+  const fmt = n => 'R$ ' + n.toFixed(2).replace('.',',');
+  const fmtN = n => n.toLocaleString('pt-BR');
+
+  document.getElementById('me-summary').innerHTML = `
+    <div class="pag-summary-card"><div class="pag-summary-label">Registros</div><div class="pag-summary-val">${rows.length}</div></div>
+    <div class="pag-summary-card"><div class="pag-summary-label">Total produzido</div><div class="pag-summary-val">${fmtN(totalQtde)} un</div></div>
+    <div class="pag-summary-card green"><div class="pag-summary-label">Valor total</div><div class="pag-summary-val" style="color:var(--teal)">${fmt(totalValor)}</div></div>
+  `;
+
+  document.getElementById('me-loading').style.display = 'none';
+  if (!rows.length) {
+    document.getElementById('me-table').style.display = 'none';
+    document.getElementById('me-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('me-table').style.display = 'table';
+  document.getElementById('me-empty').style.display = 'none';
+
+  document.getElementById('me-tbody').innerHTML = rows.map(r => {
+    const dt = r.data_producao?.split('-').reverse().join('/') || '—';
+    const pu = r.preco_unitario ? fmt(r.preco_unitario) : '—';
+    const vt = r.valor_total ? fmt(r.valor_total) : '—';
+    return `<tr style="cursor:pointer" onclick="abrirModalMaxEntrega(${r.id})">
+      <td>${dt}</td>
+      <td style="font-family:monospace;font-size:12px">${r.sku||'—'}</td>
+      <td style="font-weight:700">${fmtN(r.qtde||0)}</td>
+      <td>${pu}</td>
+      <td style="font-weight:700;color:var(--teal-dark)">${vt}</td>
+      <td style="color:var(--gray);font-size:12px">${r.op_id ? '#'+String(r.op_id).padStart(4,'0') : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Modal ME substituído acima
+
+
+// ─── MODAL MAX ENTREGAS ────────────────────────────────────────────
+function abrirModalMaxEntrega(id) {
+  const r = _maxEntregas.find(x => x.id === id);
+  if (!r) return;
+
+  document.getElementById('me-edit-id').value = id;
+  document.getElementById('me-edit-data').value = r.data_producao || '';
+  document.getElementById('me-edit-sku').value = r.sku || '';
+  document.getElementById('me-edit-qtde').value = r.qtde || '';
+  document.getElementById('me-edit-preco').value = r.preco_unitario || '';
+  document.getElementById('me-edit-total').value = r.valor_total ? 'R$ ' + r.valor_total.toFixed(2).replace('.',',') : '—';
+  document.getElementById('me-edit-op').value = r.op_id ? '#' + String(r.op_id).padStart(4,'0') : 'Sem OP';
+  document.getElementById('me-modal-overlay').classList.add('open');
+}
+
+function fecharModalME(e) {
+  if (e && e.target !== document.getElementById('me-modal-overlay')) return;
+  document.getElementById('me-modal-overlay').classList.remove('open');
+}
+
+function recalcMEPreco() {
+  const sku = document.getElementById('me-edit-sku').value;
+  const qtde = parseInt(document.getElementById('me-edit-qtde').value) || 0;
+  const preco = getPrecoInterno(sku) || parseFloat(document.getElementById('me-edit-preco').value) || 0;
+  document.getElementById('me-edit-preco').value = preco || '';
+  const total = preco * qtde;
+  document.getElementById('me-edit-total').value = total ? 'R$ ' + total.toFixed(2).replace('.',',') : '—';
+}
+
+function recalcMETotal() {
+  const qtde = parseInt(document.getElementById('me-edit-qtde').value) || 0;
+  const preco = parseFloat(document.getElementById('me-edit-preco').value) || 0;
+  const total = preco * qtde;
+  document.getElementById('me-edit-total').value = total ? 'R$ ' + total.toFixed(2).replace('.',',') : '—';
+}
+
+async function salvarEdicaoME() {
+  const senha = prompt('Senha do administrador:');
+  if (senha !== '0320') { toast('Senha incorreta.', 'error'); return; }
+
+  const id = parseInt(document.getElementById('me-edit-id').value);
+  const data = document.getElementById('me-edit-data').value;
+  const sku  = document.getElementById('me-edit-sku').value.toUpperCase().trim();
+  const qtde = parseInt(document.getElementById('me-edit-qtde').value);
+  const preco = parseFloat(document.getElementById('me-edit-preco').value) || 0;
+  const total = preco * qtde;
+
+  if (!data || !sku || !qtde) { toast('Preencha todos os campos.', 'error'); return; }
+
+  await apiPatch('maxhome_entregas', `?id=eq.${id}`, {
+    data_producao: data, sku, qtde,
+    preco_unitario: preco, valor_total: total
+  });
+
+  const idx = _maxEntregas.findIndex(x => x.id === id);
+  if (idx >= 0) _maxEntregas[idx] = { ..._maxEntregas[idx], data_producao: data, sku, qtde, preco_unitario: preco, valor_total: total };
+
+  document.getElementById('me-modal-overlay').classList.remove('open');
+  renderMaxEntregas();
+  toast('✓ Registro atualizado.', 'success');
+}
+
+async function excluirRegistroME() {
+  const id = parseInt(document.getElementById('me-edit-id').value);
+  if (!confirm('Excluir este registro permanentemente?')) return;
+
+  const res = await fetch(`${API}/maxhome_entregas?id=eq.${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } });
+  if (res.ok) {
+    _maxEntregas = _maxEntregas.filter(x => x.id !== id);
+    document.getElementById('me-modal-overlay').classList.remove('open');
+    renderMaxEntregas();
+    toast('✓ Registro excluído.', 'success');
+  } else {
+    toast('Erro ao excluir.', 'error');
+  }
+}
+
+// ─── MOBILE DETECTION ─────────────────────────────────────────────
+function isMobile() { return window.innerWidth <= 768; }
+
+
+function renderEntregaMobileSeNecessario() {
+  // Re-renderiza cards de entrega se a aba estiver ativa e usuário logado
+  const viewRegistrar = document.getElementById('view-registrar');
+  if (viewRegistrar && viewRegistrar.classList.contains('active') && usuarioLogado) {
+    renderEntregaMobile();
+  }
+  // Também atualizar se já logado como operador (OPs carregaram após o login)
+  if (usuarioLogado && document.getElementById('entrega-interface') &&
+      document.getElementById('entrega-interface').style.display !== 'none') {
+    renderEntregaMobile();
+  }
+}
+
+// ─── RENDER OPs MOBILE (cards sem digitar SKU) ────────────────────
+function renderEntregaMobile() {
+  const filtroResp = isMaster ? usuarioLogado : appUsuario;
+  if (!filtroResp) return;
+  const ops = allOPs.filter(o =>
+    o.responsavel === filtroResp &&
+    ['Em producao', 'Finalizado parcial', 'Nao iniciado'].includes(o.situacao) &&
+    (o.quantidade - o.entregue) > 0
+  );
+
+  const container = document.getElementById('ops-result');
+  if (!container) return;
+  const searchBox = document.querySelector('.sku-search-box');
+  if (searchBox) searchBox.style.display = 'none';
+
+  let html = '';
+  if (ops.length === 0) {
+    html += '<div style="padding:16px;text-align:center;color:var(--gray);font-size:14px">Nenhuma OP em aberto para você.</div>';
+  } else {
+    html += '<div style="margin-bottom:8px;font-size:13px;color:var(--gray);font-weight:500">' + ops.length + ' OP(s) em aberto</div>';
+  }
+  html += '<div class="ops-mobile-grid">';
+  ops.forEach(op => {
+    const aberto = op.quantidade - op.entregue;
+    html += `<div class="op-mobile-card" onclick="abrirQtdSheet('${op.id}')">
+      <div class="op-mobile-card-header">
+        <div class="op-mobile-num">#${op.numero}</div>
+        <div class="op-mobile-aberto">${aberto} em aberto</div>
+      </div>
+      <div class="op-mobile-produto">${op.produto}</div>
+      <div class="op-mobile-sku">${op.sku}</div>
+    </div>`;
+  });
+  html += `<div class="op-mobile-card sem-op-card" onclick="abrirQtdSheetSemOP()">
+    <div class="op-mobile-card-header">
+      <div class="op-mobile-num sem-op">S/OP</div>
+    </div>
+    <div class="op-mobile-produto">Entrega sem Ordem de Produção</div>
+    <div class="op-mobile-sku">Digitar SKU manualmente</div>
+  </div>`;
+  html += '</div>';
+  container.innerHTML = html;
+  document.getElementById('qtd-row').style.display = 'none';
+}
+
+// ─── BOTTOM SHEET QTD ─────────────────────────────────────────────
+function abrirQtdSheet(opId) {
+  const op = allOPs.find(o => String(o.id) === String(opId));
+  if (!op) return;
+  opSelecionada = op;
+  const aberto = op.quantidade - op.entregue;
+  document.getElementById('qtd-sheet-produto').textContent = op.produto;
+  document.getElementById('qtd-sheet-info').textContent = `SKU: ${op.sku} · ${aberto} em aberto`;
+  document.getElementById('qtd-sheet-input').value = '';
+  document.getElementById('qtd-sheet-input').max = aberto;
+  document.getElementById('qtd-overlay').classList.add('open');
+  document.getElementById('qtd-sheet').classList.add('open');
+  setTimeout(() => document.getElementById('qtd-sheet-input').focus(), 300);
+}
+
+function abrirQtdSheetSemOP() {
+  const sku = prompt('Digite o SKU:');
+  if (!sku) return;
+  opSelecionada = {
+    id: null, numero: 'S/OP',
+    produto: 'Entrega sem OP — ' + sku.toUpperCase(),
+    sku: sku.toUpperCase(), quantidade: 99999, entregue: 0, semOP: true
+  };
+  document.getElementById('qtd-sheet-produto').textContent = opSelecionada.produto;
+  document.getElementById('qtd-sheet-info').textContent = `SKU: ${sku.toUpperCase()} · Sem OP vinculada`;
+  document.getElementById('qtd-sheet-input').value = '';
+  document.getElementById('qtd-sheet-input').removeAttribute('max');
+  document.getElementById('qtd-overlay').classList.add('open');
+  document.getElementById('qtd-sheet').classList.add('open');
+  setTimeout(() => document.getElementById('qtd-sheet-input').focus(), 300);
+}
+
+function fecharQtdSheet() {
+  document.getElementById('qtd-overlay').classList.remove('open');
+  document.getElementById('qtd-sheet').classList.remove('open');
+  opSelecionada = null;
+}
+
+function confirmarQtdSheet() {
+  const qtd = parseInt(document.getElementById('qtd-sheet-input').value);
+  if (!qtd || qtd <= 0) { toast('Informe uma quantidade válida.', 'error'); return; }
+  const aberto = opSelecionada.semOP ? 99999 : (opSelecionada.quantidade - opSelecionada.entregue);
+  if (!opSelecionada.semOP && qtd > aberto) { toast(`Máximo: ${aberto} unidades.`, 'error'); return; }
+  const preco = (usuarioLogado === 'PRODUCAO INTERNA') ? getPrecoInterno(opSelecionada.sku) : getPreco(opSelecionada.sku);
+  const existe = carrinho.find(i => i.opId === opSelecionada.id && !opSelecionada.semOP);
+  if (existe) { existe.qtd += qtd; }
+  else {
+    carrinho.push({
+      opId: opSelecionada.id, opNumero: opSelecionada.numero,
+      produto: opSelecionada.produto, sku: opSelecionada.sku,
+      qtd, preco, aberto, semOP: opSelecionada.semOP || false
+    });
+  }
+  fecharQtdSheet();
+  renderCarrinho();
+  atualizarFAB();
+  toast(`✓ Adicionado ao carrinho!`, 'success');
+}
+
+// ─── FAB E CARRINHO SHEET ─────────────────────────────────────────
+function atualizarFAB() {
+  const fab = document.getElementById('carrinho-fab');
+  const count = document.getElementById('fab-count');
+  if (carrinho.length > 0 && isMobile()) {
+    fab.classList.add('visible');
+    count.textContent = carrinho.length;
+  } else {
+    fab.classList.remove('visible');
+  }
+}
+
+function abrirCarrinhoSheet() {
+  // Renderizar itens no sheet
+  const itemsEl = document.getElementById('carrinho-sheet-items');
+  const totalEl = document.getElementById('carrinho-sheet-total');
+  let total = 0;
+  itemsEl.innerHTML = carrinho.map((item, i) => {
+    const sub = item.preco ? item.qtd * item.preco : 0;
+    total += sub;
+    return `<div class="carrinho-item">
+      <div class="carrinho-item-info">
+        <div class="carrinho-item-prod">${item.semOP ? '<span style="color:var(--orange);font-weight:700">S/OP</span>' : 'OP #'+item.opNumero} — ${item.produto.substring(0,40)}</div>
+        <div class="carrinho-item-sku">${item.sku}</div>
+      </div>
+      <div class="carrinho-item-qtd">${item.qtd} un</div>
+      <div class="carrinho-item-valor">${sub ? 'R$ '+sub.toFixed(2).replace('.',',') : '—'}</div>
+      <button class="btn-remove" onclick="removerCarrinho(${i});abrirCarrinhoSheet()">✕</button>
+    </div>`;
+  }).join('');
+  totalEl.textContent = 'R$ ' + total.toFixed(2).replace('.',',');
+  document.getElementById('carrinho-overlay').classList.add('open');
+  document.getElementById('carrinho-sheet').classList.add('open');
+}
+
+function fecharCarrinhoSheet() {
+  document.getElementById('carrinho-overlay').classList.remove('open');
+  document.getElementById('carrinho-sheet').classList.remove('open');
+}
+
+// Sobrescrever renderCarrinho para atualizar FAB também
+const _origRenderCarrinho = renderCarrinho;
+renderCarrinho = function() {
+  _origRenderCarrinho();
+  atualizarFAB();
+};
+
+// Fechar modal ao clicar fora
+document.getElementById('op-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
+
+
 
   // ── Gráfico de produção por mês ────────────────────────────────
   const prodPorMes = {};
