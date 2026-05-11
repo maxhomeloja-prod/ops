@@ -704,8 +704,6 @@
     background: var(--charcoal); border-radius: 2px;
   }
   #ops-mobile-cards, #maxops-mobile-cards { display: none; }
-  #pag-cards { display: none; }
-  #me-cards { display: none; }
 
   /* OP Cards mobile */
   .op-card-mobile {
@@ -779,12 +777,7 @@
     .filter-select { font-size: 13px; }
     .filter-input { font-size: 13px; width: 100%; box-sizing: border-box; }
 
-    /* Pagamentos mobile — cards sem scroll */
-    #pag-cards { display: block !important; }
-    .pag-table-wrap { display: none !important; }
-    /* Me-cards mobile */
-    #me-table { display: none !important; }
-    #me-cards { display: block !important; }
+
   }
 
 
@@ -1076,7 +1069,6 @@
         </thead>
         <tbody id="pag-tbody"></tbody>
       </table>
-      <div id="pag-cards" style="padding:4px 0"></div>
       <div class="empty" id="pag-empty" style="display:none">Nenhum registro encontrado.</div>
     </div>
   </div>
@@ -3462,39 +3454,7 @@ function renderMaxEntregas() {
     </tr>`
   ).join('');
 
-  // Cards mobile
-  // me-cards: só criar/preencher — CSS @media controla visibilidade
-  let meCards = document.getElementById('me-cards');
-  if (!meCards) {
-    meCards = document.createElement('div');
-    meCards.id = 'me-cards';
-    const meTable = document.getElementById('me-table');
-    if (meTable) meTable.parentNode.insertBefore(meCards, meTable);
-  }
-  // Agrupar por dia
-  const meByDay = {};
-  meRows.forEach(row => {
-    const d = row.dt;
-    if (!meByDay[d]) meByDay[d] = { total: 0, itens: [] };
-    meByDay[d].total += row.r.valor_total || 0;
-    meByDay[d].itens.push(row);
-  });
-  meCards.innerHTML = Object.entries(meByDay).map(([dia, {total, itens}]) =>
-    `<div style="background:var(--white);border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);border-left:3px solid var(--teal)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">
-        <span style="font-size:13px;font-weight:700;color:var(--teal-dark)">${dia}</span>
-        <span style="font-size:14px;font-weight:700;color:var(--teal-dark)">${fmt(total)}</span>
-      </div>
-      ${itens.map(({r,pu,vt,op}) => `
-        <div onclick="abrirModalMaxEntrega(${r.id})" style="cursor:pointer;padding:6px 0;border-bottom:1px solid var(--border)">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:12px;font-family:monospace;color:var(--charcoal);font-weight:600">${r.sku||'—'}</span>
-            <span style="font-size:12px;font-weight:700;color:var(--charcoal)">${vt}</span>
-          </div>
-          <span style="font-size:11px;color:var(--gray)">${fmtN(r.qtde||0)} un · ${pu}/un · ${op}</span>
-        </div>`).join('')}
-    </div>`
-  ).join('');
+
 }
 
 // Modal ME substituído acima
@@ -3678,33 +3638,7 @@ renderMaxOps = function() {
 // renderPagamentosCards: ver CSS @media para mobile
 
 
-// ─── PAG CARDS MOBILE ─────────────────────────────────────────────
-function buildPagCards() {
-  const cardsEl = document.getElementById('pag-cards');
-  if (!cardsEl) return;
-  const tbody = document.getElementById('pag-tbody');
-  if (!tbody) return;
-  const rows = [...tbody.querySelectorAll('tr')];
-  cardsEl.innerHTML = rows.map(tr => {
-    const cells = [...tr.querySelectorAll('td')];
-    if (!cells.length) return '';
-    const data   = cells[0]?.textContent.trim() || '—';
-    const resp   = cells[1]?.textContent.trim() || '—';
-    const valor  = cells[3]?.textContent.trim() || '—';
-    const status = cells[4]?.textContent.trim() || '—';
-    const cor = status.includes('Pago') ? 'var(--green)' : 'var(--orange)';
-    return `<div style="background:var(--white);border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);border-left:3px solid ${cor}">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:14px;font-weight:700;color:var(--charcoal)">${resp}</span>
-        <span style="font-size:14px;font-weight:700;color:${cor}">${valor}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between">
-        <span style="font-size:12px;color:var(--gray)">${data}</span>
-        <span style="font-size:12px;color:${cor};font-weight:600">${status}</span>
-      </div>
-    </div>`;
-  }).join('');
-}
+
 
 // ─── MOBILE DETECTION ─────────────────────────────────────────────
 function isMobile() { return window.innerWidth <= 768; }
