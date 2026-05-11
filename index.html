@@ -3189,25 +3189,31 @@ async function renderDashFiltros() {
   const opsAtrasadas = opsAtivas.filter(o => o.dataPrevisaoFinal && o.dataPrevisaoFinal < hoje).length;
   const pagAberto = pags.filter(p => p.status === 'Em aberto').reduce((s,p) => s + (p.valor_total||0), 0);
 
-  // Total produzido: usa registros_entrega filtrados (coerente com gráfico e filtro de mês)
-  const pagsParaProd = _dashPags.filter(p => {
-    if (respF && p.responsavel !== respF) return false;
-    if (mesF && !(p.data_entrega||'').startsWith(mesF)) return false;
-    return true;
-  });
+  // Total produzido: PRODUCAO INTERNA usa maxhome_entregas; demais usam registros_entrega
   let totalProduzido = 0;
-  pagsParaProd.forEach(p => {
-    if (p.itens) {
-      const matches = [...p.itens.matchAll(/x(\d+)/gi)];
-      matches.forEach(m => { totalProduzido += parseInt(m[1]); });
-    }
-  });
+  if (respF === 'PRODUCAO INTERNA') {
+    (window._lastIntFilt || []).filter(e => !mesF || (e.data_producao||'').startsWith(mesF))
+      .forEach(e => { totalProduzido += e.qtde || 0; });
+  } else {
+    const pagsParaProd = _dashPags.filter(p => {
+      if (respF && p.responsavel !== respF) return false;
+      if (mesF && !(p.data_entrega||'').startsWith(mesF)) return false;
+      return true;
+    });
+    pagsParaProd.forEach(p => {
+      if (p.itens) {
+        const matches = [...p.itens.matchAll(/x(\d+)/gi)];
+        matches.forEach(m => { totalProduzido += parseInt(m[1]); });
+      }
+    });
+  }
 
 
   // ── Produção interna: calcular média diária e quadro ─────────
   try {
     const entInterna = await apiGet('maxhome_entregas', '?select=data_producao,valor_total,qtde&order=data_producao.desc&limit=500');
     const entInt = Array.isArray(entInterna) ? entInterna : [];
+    window._lastIntFilt = [];
     const intFilt = entInt.filter(e => {
       if (respF && respF !== 'PRODUCAO INTERNA') return false;
       if (mesF && !(e.data_producao||'').startsWith(mesF)) return false;
@@ -3221,6 +3227,7 @@ async function renderDashFiltros() {
       diasMap[d].qtde  += e.qtde || 0;
       diasMap[d].valor += e.valor_total || 0;
     });
+    window._lastIntFilt = intFilt;
     const diasComLancamento = Object.keys(diasMap).length;
     const totalInterno = intFilt.reduce((s,e) => s + (e.valor_total||0), 0);
     mediaDiaria = diasComLancamento > 0 ? totalInterno / diasComLancamento : 0;
@@ -3256,15 +3263,25 @@ async function renderDashFiltros() {
 
   // ── Gráfico de produção por mês ────────────────────────────────
   const prodPorMes = {};
-  _dashPags.filter(p => !respF || p.responsavel === respF).forEach(p => {
-    const mes = p.data_entrega?.substring(0,7);
-    if (!mes) return;
-    if (!prodPorMes[mes]) prodPorMes[mes] = 0;
-    if (p.itens) {
-      const matches = [...p.itens.matchAll(/x(\d+)/gi)];
-      matches.forEach(m => { prodPorMes[mes] += parseInt(m[1]); });
-    }
-  });
+  if (respF === 'PRODUCAO INTERNA') {
+    // Usar maxhome_entregas
+    (window._lastIntFilt || []).forEach(e => {
+      const mes = (e.data_producao||'').substring(0,7);
+      if (!mes) return;
+      if (!prodPorMes[mes]) prodPorMes[mes] = 0;
+      prodPorMes[mes] += e.qtde || 0;
+    });
+  } else {
+    _dashPags.filter(p => !respF || p.responsavel === respF).forEach(p => {
+      const mes = p.data_entrega?.substring(0,7);
+      if (!mes) return;
+      if (!prodPorMes[mes]) prodPorMes[mes] = 0;
+      if (p.itens) {
+        const matches = [...p.itens.matchAll(/x(\d+)/gi)];
+        matches.forEach(m => { prodPorMes[mes] += parseInt(m[1]); });
+      }
+    });
+  }
   const mesesGraf = Object.keys(prodPorMes).sort();
   const maxProd   = Math.max(...Object.values(prodPorMes), 1);
   const chartEl   = document.getElementById('dash-bar-chart');
