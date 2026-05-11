@@ -759,6 +759,8 @@
 
     /* Main padding */
     main { padding: 10px 10px 80px; }
+    .chart-wrap h3 { font-size: 13px; }
+    .bar-chart-container { overflow-x: auto; }
 
     /* CMO / Max OPs — ocultar tabela, mostrar cards */
     .ops-table-wrap { display: none !important; }
@@ -773,9 +775,9 @@
     #me-table { display: none !important; }
     #me-cards { display: block !important; }
 
-    /* Pagamentos — linhas compactas sem scroll lateral */
-    .pag-table-responsive { display: block !important; }
-    .pag-table-normal { display: none !important; }
+    /* Pagamentos — cards sem scroll lateral */
+    #pag-cards { display: block !important; }
+    #pag-cards + table, .pag-table-wrap table { display: none !important; }
   }
 
 </style>
@@ -827,8 +829,8 @@
       </select>
       <input class="filter-input" id="filter-busca" placeholder="🔍  Buscar produto ou SKU..." oninput="renderOPs()" style="flex:1; min-width:200px">
     </div>
+    <div id="ops-mobile-cards" style="padding:4px 0"></div>
     <div class="table-wrap ops-table-wrap">
-      <div id="ops-mobile-cards" style="padding:4px 0"></div>
       <div class="loading" id="ops-loading">
         <div class="spinner"></div>
         <div>Carregando ordens de produção...</div>
@@ -1028,6 +1030,7 @@
         </thead>
         <tbody id="pag-tbody"></tbody>
       </table>
+      <div id="pag-cards" style="display:none;padding:4px 0"></div>
       <div class="empty" id="pag-empty" style="display:none">Nenhum registro encontrado.</div>
     </div>
   </div>
@@ -3618,35 +3621,27 @@ function renderPagamentosCards() {
   const tbody = document.getElementById('pag-tbody');
   if (!tbody) return;
   const rows = [...tbody.querySelectorAll('tr')];
-  let cardsEl = document.getElementById('pag-cards');
-  if (!cardsEl) {
-    cardsEl = document.createElement('div');
-    cardsEl.id = 'pag-cards';
-    cardsEl.style.display = 'none';
-    tbody.closest('table').parentNode.insertBefore(cardsEl, tbody.closest('table'));
-  }
+  const cardsEl = document.getElementById('pag-cards');
+  if (!cardsEl) return;
   cardsEl.innerHTML = rows.map(tr => {
     const cells = [...tr.querySelectorAll('td')];
     if (!cells.length) return '';
-    const [data, resp, valor, status, obs, lancado] = cells.map(td => td.textContent.trim());
-    const cor = status === 'Pago' ? 'var(--green)' : 'var(--orange)';
+    const data = cells[0]?.textContent.trim() || '—';
+    const resp = cells[1]?.textContent.trim() || '—';
+    const valor = cells[3]?.textContent.trim() || '—';
+    const status = cells[4]?.textContent.trim() || '—';
+    const cor = status.includes('Pago') ? 'var(--green)' : 'var(--orange)';
     return `<div style="background:var(--white);border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);border-left:3px solid ${cor}">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
-        <span style="font-size:13px;font-weight:700;color:var(--charcoal)">${resp||'—'}</span>
-        <span style="font-size:13px;font-weight:700;color:${cor}">${valor||'—'}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:14px;font-weight:700;color:var(--charcoal)">${resp}</span>
+        <span style="font-size:14px;font-weight:700;color:${cor}">${valor}</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:11px;color:var(--gray)">${data||'—'}</span>
-        <span style="font-size:11px;color:${cor};font-weight:600">${status||'—'}</span>
+        <span style="font-size:12px;color:var(--gray)">${data}</span>
+        <span style="font-size:12px;color:${cor};font-weight:600">${status}</span>
       </div>
-      ${obs ? `<div style="font-size:11px;color:var(--gray);margin-top:3px">${obs}</div>` : ''}
     </div>`;
   }).join('');
-  // Adicionar CSS para mobile
-  if (window.innerWidth <= 768) {
-    cardsEl.style.display = 'block';
-    tbody.closest('table').style.display = 'none';
-  }
 }
 
 // ─── MOBILE DETECTION ─────────────────────────────────────────────
