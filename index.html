@@ -1248,11 +1248,11 @@
 
 
   <!-- MODAL MAX ENTREGAS -->
-  <div id="me-modal-overlay" onclick="fecharModalME(event)" style="display:none">
+  <div id="me-modal-overlay" onclick="fecharModalME(event)">
     <div id="me-modal">
       <div class="me-modal-header">
         <div class="me-modal-title">✏️ Editar Registro</div>
-        <button class="modal-close" onclick="fecharModalME()">✕</button>
+        <button class="modal-close" onclick="closeModalME()">✕</button>
       </div>
       <div class="me-modal-body">
         <input type="hidden" id="me-edit-id">
@@ -1283,7 +1283,7 @@
       </div>
       <div class="me-modal-footer">
         <button class="btn-danger-outline" onclick="excluirRegistroME()">🗑 Excluir</button>
-        <button class="btn btn-outline" onclick="fecharModalME()">Cancelar</button>
+        <button class="btn btn-outline" onclick="closeModalME()">Cancelar</button>
         <button class="btn btn-primary" onclick="salvarEdicaoME()">Salvar</button>
       </div>
     </div>
@@ -3536,6 +3536,10 @@ function abrirModalMaxEntrega(id) {
 
 function fecharModalME(e) {
   if (e && e.target !== document.getElementById('me-modal-overlay')) return;
+  document.getElementById('me-modal-overlay').classList.remove('open');
+}
+
+function closeModalME() {
   document.getElementById('me-modal-overlay').classList.remove('open');
 }
 
