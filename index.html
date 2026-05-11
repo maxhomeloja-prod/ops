@@ -834,6 +834,13 @@
   .dash-filter-select { padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--charcoal); background: var(--white); outline: none; cursor: pointer; }
   .dash-filter-select:focus { border-color: var(--teal); }
 
+  /* ─── PAG BADGES ─── */
+  .pag-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .pag-badge.pago { background: #dcfce7; color: var(--green); }
+  .pag-badge.aberto { background: #fff7ed; color: var(--orange); }
+  .pag-badge.lancado { background: var(--teal-light); color: var(--teal-dark); }
+  .pag-badge.nao-lancado { background: #f3f4f6; color: var(--gray); }
+
   /* ─── MODAL MAX ENTREGAS ─── */
   #me-modal { background: var(--white); border-radius: 16px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin: 20px; }
   .me-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
@@ -1228,7 +1235,7 @@
 
 
   <!-- MODAL MAX ENTREGAS -->
-  <div id="me-modal-overlay" onclick="fecharModalME(event)">
+  <div id="me-modal-overlay" onclick="fecharModalME(event)" style="display:none">
     <div id="me-modal">
       <div class="me-modal-header">
         <div class="me-modal-title">✏️ Editar Registro</div>
