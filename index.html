@@ -897,6 +897,124 @@
   .btn-danger-outline { padding: 10px 18px; border: 1.5px solid var(--red); border-radius: 8px; background: transparent; color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
   .btn-danger-outline:hover { background: #fee2e2; }
 
+
+  /* ─── MOBILE RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    /* Header compacto */
+    header {
+      padding: 0 14px;
+      height: 56px;
+      flex-wrap: nowrap;
+    }
+    .logo-text { font-size: 15px; }
+    .logo-text span:last-child { display: none; } /* ocultar "| Ordens de Produção" */
+    .logo-area img { width: 32px; height: 32px; }
+
+    /* Nav vira menu dropdown */
+    #main-nav {
+      position: fixed !important;
+      top: 56px; left: 0; right: 0;
+      background: var(--white);
+      border-bottom: 2px solid var(--teal-light);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 0 !important;
+      padding: 8px 0;
+      z-index: 99;
+      display: none !important;
+    }
+    #main-nav.mobile-open {
+      display: flex !important;
+    }
+    #main-nav .nav-btn {
+      border-radius: 0;
+      text-align: left;
+      padding: 14px 20px;
+      font-size: 15px;
+      border-bottom: 1px solid var(--border);
+      background: none;
+    }
+    #main-nav .nav-btn.active {
+      background: var(--teal-light);
+      color: var(--teal-dark);
+    }
+    #main-nav .nav-btn:last-child { border-bottom: none; }
+
+    /* Hamburguer */
+    #mobile-menu-btn {
+      display: flex !important;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Usuário no header mobile */
+    #header-user { margin-left: 0 !important; }
+    .header-username { display: none; }
+
+    /* Overlay do menu */
+    #mobile-nav-overlay {
+      display: none;
+      position: fixed;
+      inset: 56px 0 0 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 98;
+    }
+    #mobile-nav-overlay.open { display: block; }
+
+    /* Conteúdo principal com offset do header */
+    main { padding-top: 8px; }
+
+    /* KPI cards em 2 colunas no mobile */
+    .dash-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+    }
+    .kpi-card { padding: 14px; }
+    .kpi-value { font-size: 22px !important; }
+
+    /* Dash rows em coluna */
+    .dash-row { grid-template-columns: 1fr !important; }
+
+    /* Tabelas com scroll horizontal */
+    .table-wrap { overflow-x: auto; }
+    table { min-width: 600px; }
+
+    /* Chart menor */
+    .bar-chart { height: 100px; }
+    .bar-col { width: 36px; }
+  }
+
+  /* Hamburguer btn — oculto no desktop */
+  #mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    flex-direction: column;
+    gap: 5px;
+  }
+  #mobile-menu-btn span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--charcoal);
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  /* Tab ativa no mobile — mostrar nome */
+  .mobile-tab-label {
+    display: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--teal-dark);
+  }
+  @media (max-width: 768px) {
+    .mobile-tab-label { display: block; }
+  }
+
 </style>
 </head>
 <body>
@@ -906,6 +1024,9 @@
     <img id="logo-img" src="" alt="Max Home">
     <div class="logo-text">Max<span>Home</span> <span style="color:var(--gray);font-weight:300;font-size:14px">| Ordens de Produção</span></div>
   </div>
+  <button id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
   <nav id="main-nav" style="display:flex;align-items:center;gap:4px">
     <button class="nav-btn" id="nav-dashboard" onclick="showView('dashboard')" style="display:none">📊 Dashboard</button>
     <button class="nav-btn active" id="nav-ops" onclick="showView('ops')">📋 CMO</button>
@@ -921,6 +1042,7 @@
     </div>
   </nav>
 </header>
+<div id="mobile-nav-overlay" onclick="closeMobileMenu()"></div>
 
 <main>
   <!-- VIEW: ORDENS -->
@@ -3600,6 +3722,33 @@ async function excluirRegistroME() {
     toast('Erro ao excluir.', 'error');
   }
 }
+
+
+// ─── MOBILE MENU ────────────────────────────────────────────────
+function toggleMobileMenu() {
+  const nav = document.getElementById('main-nav');
+  const overlay = document.getElementById('mobile-nav-overlay');
+  const isOpen = nav.classList.contains('mobile-open');
+  if (isOpen) {
+    nav.classList.remove('mobile-open');
+    overlay.classList.remove('open');
+  } else {
+    nav.classList.add('mobile-open');
+    overlay.classList.add('open');
+  }
+}
+
+function closeMobileMenu() {
+  document.getElementById('main-nav')?.classList.remove('mobile-open');
+  document.getElementById('mobile-nav-overlay')?.classList.remove('open');
+}
+
+// Fechar menu ao selecionar aba
+const _origShowView = showView;
+showView = function(v) {
+  closeMobileMenu();
+  _origShowView(v);
+};
 
 // ─── MOBILE DETECTION ─────────────────────────────────────────────
 function isMobile() { return window.innerWidth <= 768; }
