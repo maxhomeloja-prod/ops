@@ -685,135 +685,45 @@
 
   
   /* ─── MOBILE: OPs como cards ─── */
-  @media (max-width: 768px) {
-    /* Ocultar tabela, mostrar cards */
-    .ops-table-wrap { display: none !important; }
-    #ops-mobile-cards, #maxops-mobile-cards { display: block !important; }
-
-    .op-card-mobile {
-      background: var(--white);
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      box-shadow: var(--shadow);
-      cursor: pointer;
-      border-left: 4px solid var(--teal);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .op-card-mobile.finalizado { border-left-color: var(--green); }
-    .op-card-mobile.atrasada { border-left-color: var(--red); }
-    .op-card-mobile.parcial { border-left-color: var(--orange); }
-
-    .op-card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-    }
-    .op-card-num {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--teal-dark);
-      background: var(--teal-light);
-      padding: 2px 8px;
-      border-radius: 6px;
-      white-space: nowrap;
-    }
-    .op-card-produto {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--charcoal);
-      flex: 1;
-      line-height: 1.3;
-    }
-    .op-card-bottom {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-    .op-card-resp {
-      font-size: 12px;
-      color: var(--gray);
-    }
-    .op-card-progress {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex: 1;
-    }
-    .op-card-bar {
-      flex: 1;
-      height: 6px;
-      background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    .op-card-bar-fill {
-      height: 100%;
-      background: var(--teal);
-      border-radius: 3px;
-    }
-    .op-card-qtd {
-      font-size: 11px;
-      color: var(--gray);
-      white-space: nowrap;
-    }
-    .op-card-previsao {
-      font-size: 11px;
-      color: var(--gray);
-      white-space: nowrap;
-    }
-
-    /* Desktop: ocultar cards mobile */
-    #ops-mobile-cards, #maxops-mobile-cards { display: none; }
-    .ops-table-wrap { display: block; }
-  }
+  
 
 
-  @media (max-width: 768px) {
-    /* Max Entregas — tabela compacta */
-    .pag-table td, .pag-table th { font-size: 11px !important; padding: 7px 6px !important; }
-    .pag-table { min-width: 0 !important; }
-    .pag-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .pag-summary { flex-wrap: wrap; gap: 8px; }
-    .pag-summary-card { padding: 10px 12px; min-width: 80px; }
-    .pag-summary-label { font-size: 10px; }
-    .pag-summary-val { font-size: 15px; }
-
-    /* Filtros Max Entregas */
-    .pag-filters { flex-wrap: wrap; gap: 8px; }
-    .pag-filters input, .pag-filters .dash-filter-select { font-size: 13px; padding: 8px 10px; }
-
-    /* Pagamentos — tabela compacta */
-    .pag-table-wrap table td, .pag-table-wrap table th { font-size: 11px !important; padding: 7px 6px !important; }
-
-    /* Modal OP — mais compacto */
-    .op-modal { max-height: 92vh; margin: 10px; border-radius: 12px; }
-    .modal-header { padding: 14px 16px; }
-    .detail-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .detail-field { padding: 8px 10px; }
-    .detail-field label { font-size: 10px; }
-    .detail-field .val { font-size: 13px; }
-    .modal-footer { padding: 12px 16px; gap: 8px; }
-    .modal-footer .btn { padding: 9px 14px; font-size: 13px; }
-    #modal-badge { font-size: 12px; }
-    #modal-op-num { font-size: 14px; }
-    .progress-section { padding: 0 16px 12px; }
-  }
+  
 
 
-  /* ═══════ MOBILE RESPONSIVE (≤768px) ═══════ */
+  
+
+  /* ═══ MOBILE ═══════════════════════════════════════════════════ */
   #mobile-menu-btn {
     display: none;
-    background: none; border: none; cursor: pointer;
-    padding: 8px; border-radius: 8px;
-    flex-direction: column; gap: 5px; align-items: center; justify-content: center;
+    background: none; border: none; cursor: pointer; padding: 8px;
+    flex-direction: column; gap: 5px; align-items: center;
   }
-  #mobile-menu-btn span { display: block; width: 22px; height: 2px; background: var(--charcoal); border-radius: 2px; }
+  #mobile-menu-btn span {
+    display: block; width: 22px; height: 2px;
+    background: var(--charcoal); border-radius: 2px;
+  }
   #ops-mobile-cards, #maxops-mobile-cards { display: none; }
+
+  /* OP Cards mobile */
+  .op-card-mobile {
+    background: var(--white); border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 8px; box-shadow: var(--shadow); cursor: pointer;
+    border-left: 3px solid var(--teal);
+  }
+  .op-card-mobile.finalizado { border-left-color: var(--green); }
+  .op-card-mobile.atrasada { border-left-color: var(--red); }
+  .op-card-mobile.parcial { border-left-color: var(--orange); }
+  .op-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+  .op-card-num { font-size: 11px; font-weight: 700; color: var(--teal-dark); background: var(--teal-light); padding: 2px 7px; border-radius: 5px; white-space: nowrap; flex-shrink: 0; }
+  .op-card-produto { font-size: 13px; font-weight: 600; color: var(--charcoal); flex: 1; line-height: 1.3; }
+  .op-card-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .op-card-resp { font-size: 11px; color: var(--gray); flex-shrink: 0; max-width: 70px; }
+  .op-card-progress { display: flex; align-items: center; gap: 5px; flex: 1; }
+  .op-card-bar { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .op-card-bar-fill { height: 100%; background: var(--teal); border-radius: 3px; }
+  .op-card-qtd { font-size: 11px; color: var(--gray); white-space: nowrap; }
+  .op-card-previsao { font-size: 11px; color: var(--gray); white-space: nowrap; }
 
   @media (max-width: 768px) {
     /* Header */
@@ -823,8 +733,10 @@
     .logo-text { font-size: 14px; }
     .logo-text > span:last-child { display: none; }
     #mobile-menu-btn { display: flex !important; }
+    .header-username { display: none; }
+    #header-user { margin-left: 4px !important; }
 
-    /* Nav dropdown */
+    /* Nav */
     #main-nav {
       position: fixed !important; top: 52px; left: 0; right: 0;
       background: var(--white); border-bottom: 2px solid var(--teal-light);
@@ -834,77 +746,36 @@
       display: none !important;
     }
     #main-nav.mobile-open { display: flex !important; }
-    #main-nav .nav-btn { border-radius: 0; text-align: left; padding: 13px 20px; font-size: 15px; border-bottom: 1px solid var(--border); background: none; }
+    #main-nav .nav-btn {
+      border-radius: 0; text-align: left; padding: 13px 20px;
+      font-size: 15px; border-bottom: 1px solid var(--border); background: none;
+    }
     #main-nav .nav-btn.active { background: var(--teal-light); color: var(--teal-dark); }
-    #main-nav .nav-btn:last-child { border-bottom: none; }
-    #mobile-nav-overlay { display: none; position: fixed; inset: 52px 0 0 0; background: rgba(0,0,0,0.3); z-index: 98; }
+    #mobile-nav-overlay {
+      display: none; position: fixed; inset: 52px 0 0 0;
+      background: rgba(0,0,0,0.3); z-index: 98;
+    }
     #mobile-nav-overlay.open { display: block; }
-    .header-username { display: none; }
-    #header-user { margin-left: 0 !important; }
 
-    /* Main */
+    /* Main padding */
     main { padding: 10px 10px 80px; }
 
-    /* Dashboard KPIs */
-    .dash-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
-    .kpi-card { padding: 12px; }
-    .kpi-value { font-size: 20px !important; }
-    .kpi-label { font-size: 10px; }
-    .kpi-sub { font-size: 11px; }
-    .dash-row { grid-template-columns: 1fr !important; }
-    .bar-chart { height: 90px; }
-    .bar-col { width: 36px; }
-
-    /* CMO / Max OPs: ocultar tabela, mostrar cards */
+    /* CMO / Max OPs — ocultar tabela, mostrar cards */
     .ops-table-wrap { display: none !important; }
     #ops-mobile-cards, #maxops-mobile-cards { display: block !important; }
 
     /* Filtros */
     .filters { flex-wrap: wrap; gap: 8px; }
-    .filter-select, .filter-input { font-size: 14px; width: 100%; box-sizing: border-box; }
+    .filter-select { font-size: 13px; }
+    .filter-input { font-size: 13px; width: 100%; box-sizing: border-box; }
 
-    /* OP Cards mobile */
-    .op-card-mobile {
-      background: var(--white); border-radius: 10px; padding: 12px 14px;
-      margin-bottom: 8px; box-shadow: var(--shadow); cursor: pointer;
-      border-left: 3px solid var(--teal); display: flex; flex-direction: column; gap: 6px;
-    }
-    .op-card-mobile.finalizado { border-left-color: var(--green); opacity: 0.8; }
-    .op-card-mobile.atrasada { border-left-color: var(--red); }
-    .op-card-mobile.parcial { border-left-color: var(--orange); }
-    .op-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    .op-card-num { font-size: 11px; font-weight: 700; color: var(--teal-dark); background: var(--teal-light); padding: 2px 7px; border-radius: 5px; white-space: nowrap; flex-shrink: 0; }
-    .op-card-produto { font-size: 13px; font-weight: 600; color: var(--charcoal); flex: 1; line-height: 1.3; }
-    .op-card-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .op-card-resp { font-size: 11px; color: var(--gray); flex-shrink: 0; }
-    .op-card-progress { display: flex; align-items: center; gap: 6px; flex: 1; }
-    .op-card-bar { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
-    .op-card-bar-fill { height: 100%; background: var(--teal); border-radius: 3px; }
-    .op-card-qtd { font-size: 11px; color: var(--gray); white-space: nowrap; }
-    .op-card-previsao { font-size: 11px; color: var(--gray); white-space: nowrap; }
+    /* Max Entregas — linhas em 2 linhas (sem scroll lateral) */
+    #me-table { display: none !important; }
+    #me-cards { display: block !important; }
 
-    /* Modal OP compacto */
-    .op-modal { max-height: 88vh; margin: 12px; border-radius: 14px; }
-    .modal-header { padding: 12px 16px; }
-    .detail-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .detail-field { padding: 8px 10px; }
-    .detail-field label { font-size: 10px; }
-    .detail-field .val { font-size: 12px; }
-    .modal-footer { padding: 10px 16px; gap: 8px; flex-wrap: wrap; }
-    .modal-footer .btn { padding: 8px 12px; font-size: 13px; }
-    #modal-op-num { font-size: 13px; }
-
-    /* Max Entregas e Pagamentos — compacto */
-    .pag-filters { flex-wrap: wrap; gap: 6px; }
-    .pag-filters input, .pag-filters select, .pag-filters .dash-filter-select { font-size: 13px; padding: 7px 10px; }
-    .pag-summary { flex-wrap: wrap; gap: 8px; }
-    .pag-summary-card { padding: 8px 10px; min-width: 70px; }
-    .pag-summary-label { font-size: 10px; }
-    .pag-summary-val { font-size: 14px; }
-    .pag-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
-    .pag-table { width: 100%; min-width: 0 !important; table-layout: auto; }
-    .pag-table td, .pag-table th { font-size: 11px !important; padding: 6px 5px !important; white-space: nowrap; }
-    .pag-table td:nth-child(2), .pag-table th:nth-child(2) { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+    /* Pagamentos — linhas compactas sem scroll lateral */
+    .pag-table-responsive { display: block !important; }
+    .pag-table-normal { display: none !important; }
   }
 
 </style>
@@ -3523,19 +3394,46 @@ function renderMaxEntregas() {
   document.getElementById('me-table').style.display = 'table';
   document.getElementById('me-empty').style.display = 'none';
 
-  document.getElementById('me-tbody').innerHTML = rows.map(r => {
+  const meRows = rows.map(r => {
     const dt = r.data_producao?.split('-').reverse().join('/') || '—';
     const pu = r.preco_unitario ? fmt(r.preco_unitario) : '—';
     const vt = r.valor_total ? fmt(r.valor_total) : '—';
-    return `<tr style="cursor:pointer" onclick="abrirModalMaxEntrega(${r.id})">
+    const op = r.op_id ? '#'+String(r.op_id).padStart(4,'0') : 'S/OP';
+    return { r, dt, pu, vt, op };
+  });
+
+  document.getElementById('me-tbody').innerHTML = meRows.map(({r,dt,pu,vt,op}) =>
+    `<tr style="cursor:pointer" onclick="abrirModalMaxEntrega(${r.id})">
       <td>${dt}</td>
       <td style="font-family:monospace;font-size:12px">${r.sku||'—'}</td>
       <td style="font-weight:700">${fmtN(r.qtde||0)}</td>
       <td>${pu}</td>
       <td style="font-weight:700;color:var(--teal-dark)">${vt}</td>
-      <td style="color:var(--gray);font-size:12px">${r.op_id ? '#'+String(r.op_id).padStart(4,'0') : '—'}</td>
-    </tr>`;
-  }).join('');
+      <td style="color:var(--gray);font-size:12px">${op}</td>
+    </tr>`
+  ).join('');
+
+  // Cards mobile
+  let meCards = document.getElementById('me-cards');
+  if (!meCards) {
+    meCards = document.createElement('div');
+    meCards.id = 'me-cards';
+    meCards.style.display = 'none';
+    document.getElementById('me-table').parentNode.insertBefore(meCards, document.getElementById('me-table'));
+  }
+  meCards.innerHTML = meRows.map(({r,dt,pu,vt,op}) =>
+    `<div onclick="abrirModalMaxEntrega(${r.id})" style="background:var(--white);border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);cursor:pointer;border-left:3px solid var(--teal)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:700;color:var(--teal-dark)">${dt}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--teal-dark)">${vt}</span>
+      </div>
+      <div style="font-size:12px;font-family:monospace;color:var(--charcoal);margin-bottom:4px">${r.sku||'—'}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:var(--gray)">${fmtN(r.qtde||0)} un · ${pu}/un</span>
+        <span style="font-size:11px;color:var(--gray)">${op}</span>
+      </div>
+    </div>`
+  ).join('');
 }
 
 // Modal ME substituído acima
@@ -3714,6 +3612,42 @@ renderMaxOps = function() {
     renderOpCards(ops, 'maxops-mobile-cards');
   }
 };
+
+
+function renderPagamentosCards() {
+  const tbody = document.getElementById('pag-tbody');
+  if (!tbody) return;
+  const rows = [...tbody.querySelectorAll('tr')];
+  let cardsEl = document.getElementById('pag-cards');
+  if (!cardsEl) {
+    cardsEl = document.createElement('div');
+    cardsEl.id = 'pag-cards';
+    cardsEl.style.display = 'none';
+    tbody.closest('table').parentNode.insertBefore(cardsEl, tbody.closest('table'));
+  }
+  cardsEl.innerHTML = rows.map(tr => {
+    const cells = [...tr.querySelectorAll('td')];
+    if (!cells.length) return '';
+    const [data, resp, valor, status, obs, lancado] = cells.map(td => td.textContent.trim());
+    const cor = status === 'Pago' ? 'var(--green)' : 'var(--orange)';
+    return `<div style="background:var(--white);border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);border-left:3px solid ${cor}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <span style="font-size:13px;font-weight:700;color:var(--charcoal)">${resp||'—'}</span>
+        <span style="font-size:13px;font-weight:700;color:${cor}">${valor||'—'}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:var(--gray)">${data||'—'}</span>
+        <span style="font-size:11px;color:${cor};font-weight:600">${status||'—'}</span>
+      </div>
+      ${obs ? `<div style="font-size:11px;color:var(--gray);margin-top:3px">${obs}</div>` : ''}
+    </div>`;
+  }).join('');
+  // Adicionar CSS para mobile
+  if (window.innerWidth <= 768) {
+    cardsEl.style.display = 'block';
+    tbody.closest('table').style.display = 'none';
+  }
+}
 
 // ─── MOBILE DETECTION ─────────────────────────────────────────────
 function isMobile() { return window.innerWidth <= 768; }
