@@ -704,6 +704,8 @@
     background: var(--charcoal); border-radius: 2px;
   }
   #ops-mobile-cards, #maxops-mobile-cards { display: none; }
+  #pag-cards { display: none; }
+  #me-cards { display: none; }
 
   /* OP Cards mobile */
   .op-card-mobile {
@@ -777,13 +779,12 @@
     .filter-select { font-size: 13px; }
     .filter-input { font-size: 13px; width: 100%; box-sizing: border-box; }
 
-    /* Max Entregas — linhas em 2 linhas (sem scroll lateral) */
-    #me-table { display: none !important; }
-    #me-cards { display: block !important; }
-
-    /* Pagamentos — cards sem scroll lateral */
+    /* Pagamentos mobile — cards sem scroll */
     #pag-cards { display: block !important; }
     .pag-table-wrap { display: none !important; }
+    /* Me-cards mobile */
+    #me-table { display: none !important; }
+    #me-cards { display: block !important; }
   }
 
 
@@ -3016,8 +3017,7 @@ function renderPagamentos() {
 
   document.getElementById('pag-tbody').innerHTML = rows.map(r => {
     const data = r.data_entrega ? r.data_entrega.split('-').reverse().join('/') : '—';
-
-  setTimeout(renderPagamentosCards, 50);    const valor = r.valor_total ? fmt(r.valor_total) : '—';
+    const valor = r.valor_total ? fmt(r.valor_total) : '—';
     const itens = r.itens ? r.itens.substring(0, 60) + (r.itens.length > 60 ? '...' : '') : '—';
     const statusBadge = r.status === 'Pago'
       ? '<span class="pag-badge pago">✓ Pago</span>'
@@ -3463,12 +3463,13 @@ function renderMaxEntregas() {
   ).join('');
 
   // Cards mobile
+  // me-cards: só criar/preencher — CSS @media controla visibilidade
   let meCards = document.getElementById('me-cards');
   if (!meCards) {
     meCards = document.createElement('div');
     meCards.id = 'me-cards';
-    // display controlado pelo CSS @media — não setar inline
-    document.getElementById('me-table').parentNode.insertBefore(meCards, document.getElementById('me-table'));
+    const meTable = document.getElementById('me-table');
+    if (meTable) meTable.parentNode.insertBefore(meCards, meTable);
   }
   // Agrupar por dia
   const meByDay = {};
@@ -3674,32 +3675,35 @@ renderMaxOps = function() {
 };
 
 
-function renderPagamentosCards() {
+// renderPagamentosCards: ver CSS @media para mobile
+
+
+// ─── PAG CARDS MOBILE ─────────────────────────────────────────────
+function buildPagCards() {
+  const cardsEl = document.getElementById('pag-cards');
+  if (!cardsEl) return;
   const tbody = document.getElementById('pag-tbody');
   if (!tbody) return;
   const rows = [...tbody.querySelectorAll('tr')];
-  const cardsEl = document.getElementById('pag-cards');
-  if (!cardsEl) return;
   cardsEl.innerHTML = rows.map(tr => {
     const cells = [...tr.querySelectorAll('td')];
     if (!cells.length) return '';
-    const data = cells[0]?.textContent.trim() || '—';
-    const resp = cells[1]?.textContent.trim() || '—';
-    const valor = cells[3]?.textContent.trim() || '—';
+    const data   = cells[0]?.textContent.trim() || '—';
+    const resp   = cells[1]?.textContent.trim() || '—';
+    const valor  = cells[3]?.textContent.trim() || '—';
     const status = cells[4]?.textContent.trim() || '—';
     const cor = status.includes('Pago') ? 'var(--green)' : 'var(--orange)';
     return `<div style="background:var(--white);border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);border-left:3px solid ${cor}">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
         <span style="font-size:14px;font-weight:700;color:var(--charcoal)">${resp}</span>
         <span style="font-size:14px;font-weight:700;color:${cor}">${valor}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;justify-content:space-between">
         <span style="font-size:12px;color:var(--gray)">${data}</span>
         <span style="font-size:12px;color:${cor};font-weight:600">${status}</span>
       </div>
     </div>`;
   }).join('');
-  // NÃO manipular display inline — deixar para o CSS via @media
 }
 
 // ─── MOBILE DETECTION ─────────────────────────────────────────────
