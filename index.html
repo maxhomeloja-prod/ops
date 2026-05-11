@@ -834,9 +834,29 @@
   .dash-filter-select { padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--charcoal); background: var(--white); outline: none; cursor: pointer; }
   .dash-filter-select:focus { border-color: var(--teal); }
 
-  /* ─── MODAIS ─── */
-  #me-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; align-items: center; justify-content: center; }
-  #me-modal-overlay.open { display: flex; }
+  /* ─── MODAL MAX ENTREGAS ─── */
+  #me-modal { background: var(--white); border-radius: 16px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin: 20px; }
+  .me-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+  .me-modal-title { font-size: 17px; font-weight: 700; color: var(--charcoal); }
+  .me-modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .me-modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+  .me-field label { display: block; font-size: 11px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .me-field input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--charcoal); outline: none; box-sizing: border-box; }
+  .me-field input:focus { border-color: var(--teal); }
+  .me-field input[readonly] { background: var(--light); color: var(--gray); }
+  .btn-danger-outline { padding: 10px 18px; border: 1.5px solid var(--red); border-radius: 8px; background: transparent; color: var(--red); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-danger-outline:hover { background: #fee2e2; }
+
+  /* ─── BOTÕES PAGAMENTOS ─── */
+  .btn-pag { padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+  .btn-marcar-pago { background: #dcfce7; color: var(--green); }
+  .btn-marcar-pago:hover { background: #bbf7d0; }
+  .btn-marcar-aberto { background: #fff7ed; color: var(--orange); }
+  .btn-marcar-aberto:hover { background: #fed7aa; }
+  .btn-marcar-lancado { background: var(--teal-light); color: var(--teal-dark); }
+  .btn-marcar-lancado:hover { background: #b2dfdb; }
+  .btn-desmarcar-lancado { background: #f3f4f6; color: var(--gray); }
+  .btn-desmarcar-lancado:hover { background: #e5e7eb; }
 
 </style>
 </head>
