@@ -18,7 +18,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Max Home — Ordens de Produção</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -902,13 +902,14 @@
   @media (max-width: 768px) {
     /* Header compacto */
     header {
-      padding: 0 14px;
-      height: 56px;
+      padding: 0 12px;
+      height: 52px;
       flex-wrap: nowrap;
     }
-    .logo-text { font-size: 15px; }
-    .logo-text span:last-child { display: none; } /* ocultar "| Ordens de Produção" */
-    .logo-area img { width: 32px; height: 32px; }
+    .logo-text { font-size: 14px; }
+    .logo-text span:last-child { display: none; }
+    .logo-area img { width: 28px; height: 28px; }
+    .logo-area { gap: 8px; }
 
     /* Nav vira menu dropdown */
     #main-nav {
@@ -963,7 +964,9 @@
     #mobile-nav-overlay.open { display: block; }
 
     /* Conteúdo principal com offset do header */
-    main { padding-top: 8px; }
+    main { padding: 8px 10px 80px; }
+    .filters { flex-wrap: wrap; gap: 8px; }
+    .filter-select, .filter-input { font-size: 14px; }
 
     /* KPI cards em 2 colunas no mobile */
     .dash-grid {
@@ -1019,7 +1022,7 @@
   /* ─── MOBILE: OPs como cards ─── */
   @media (max-width: 768px) {
     /* Ocultar tabela, mostrar cards */
-    .ops-table-wrap table { display: none !important; }
+    .ops-table-wrap { display: none !important; }
     #ops-mobile-cards, #maxops-mobile-cards { display: block !important; }
 
     .op-card-mobile {
@@ -1101,6 +1104,7 @@
 
     /* Desktop: ocultar cards mobile */
     #ops-mobile-cards, #maxops-mobile-cards { display: none; }
+    .ops-table-wrap { display: block; }
   }
 
 </style>
@@ -1434,9 +1438,9 @@
       </select>
       <input type="text" class="filter-input" id="search-maxops" placeholder="🔍 Buscar produto ou SKU..." oninput="renderMaxOps()">
     </div>
+    <div id="maxops-mobile-cards" style="padding:4px 0"></div>
     <div class="table-wrap ops-table-wrap">
       <div class="loading" id="maxops-loading"><div class="spinner"></div><div>Carregando...</div></div>
-      <div id="maxops-mobile-cards" style="display:none;padding:4px 0"></div>
       <table id="maxops-table" style="display:none">
         <thead><tr>
           <th>OP</th><th>Produto</th><th>Responsável</th>
