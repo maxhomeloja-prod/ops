@@ -2790,10 +2790,13 @@ function renderCarrinho() {
 function abrirConfirmacao() {
   // Mostrar campo data apenas para PRODUCAO INTERNA
   const dataWrap = document.getElementById('conf-data-wrap');
+  const isPI = usuarioLogado === 'PRODUCAO INTERNA' ||
+    document.getElementById('login-nome')?.value === 'PRODUCAO INTERNA';
   if (dataWrap) {
-    dataWrap.style.display = usuarioLogado === 'PRODUCAO INTERNA' ? 'block' : 'none';
+    dataWrap.style.display = isPI ? 'block' : 'none';
     const dataInput = document.getElementById('conf-data-producao');
-    if (dataInput) dataInput.value = new Date().toISOString().split('T')[0];
+    // Para PI: não preencher automaticamente — usuário deve informar
+    if (dataInput && isPI) dataInput.value = '';
   }
   if (!carrinho.length) return;
   let total = 0;
@@ -2909,13 +2912,12 @@ async function confirmarEntrega() {
       op.situacao = novaSit;
     }
 
-    // 2b. Se for TIAGO — criar OPs automáticas para PRODUCAO INTERNA
+    // 2b. Se for TIAGO — criar OPs automáticas para PRODUCAO INTERNA (incluindo S/OP)
     if (usuarioLogado === 'TIAGO') {
       const hoje = new Date();
       const previsao = new Date(hoje.getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       const dataHoje = hoje.toISOString().split('T')[0];
       for (const item of carrinho) {
-        if (item.semOP) continue;
         try {
           const ultimaOPData = await apiGet('ordens_producao', '?select=op_numero&order=op_numero.desc&limit=1');
           const proximoNum = Array.isArray(ultimaOPData) && ultimaOPData.length > 0 ? ultimaOPData[0].op_numero + 1 : 1;
