@@ -1015,6 +1015,94 @@
     .mobile-tab-label { display: block; }
   }
 
+
+  /* ─── MOBILE: OPs como cards ─── */
+  @media (max-width: 768px) {
+    /* Ocultar tabela, mostrar cards */
+    .ops-table-wrap table { display: none !important; }
+    #ops-mobile-cards, #maxops-mobile-cards { display: block !important; }
+
+    .op-card-mobile {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      border-left: 4px solid var(--teal);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .op-card-mobile.finalizado { border-left-color: var(--green); }
+    .op-card-mobile.atrasada { border-left-color: var(--red); }
+    .op-card-mobile.parcial { border-left-color: var(--orange); }
+
+    .op-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .op-card-num {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--teal-dark);
+      background: var(--teal-light);
+      padding: 2px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .op-card-produto {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--charcoal);
+      flex: 1;
+      line-height: 1.3;
+    }
+    .op-card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .op-card-resp {
+      font-size: 12px;
+      color: var(--gray);
+    }
+    .op-card-progress {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+    }
+    .op-card-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .op-card-bar-fill {
+      height: 100%;
+      background: var(--teal);
+      border-radius: 3px;
+    }
+    .op-card-qtd {
+      font-size: 11px;
+      color: var(--gray);
+      white-space: nowrap;
+    }
+    .op-card-previsao {
+      font-size: 11px;
+      color: var(--gray);
+      white-space: nowrap;
+    }
+
+    /* Desktop: ocultar cards mobile */
+    #ops-mobile-cards, #maxops-mobile-cards { display: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -1346,8 +1434,9 @@
       </select>
       <input type="text" class="filter-input" id="search-maxops" placeholder="🔍 Buscar produto ou SKU..." oninput="renderMaxOps()">
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap ops-table-wrap">
       <div class="loading" id="maxops-loading"><div class="spinner"></div><div>Carregando...</div></div>
+      <div id="maxops-mobile-cards" style="display:none;padding:4px 0"></div>
       <table id="maxops-table" style="display:none">
         <thead><tr>
           <th>OP</th><th>Produto</th><th>Responsável</th>
@@ -3748,6 +3837,76 @@ const _origShowView = showView;
 showView = function(v) {
   closeMobileMenu();
   _origShowView(v);
+};
+
+
+// ─── MOBILE CARDS ────────────────────────────────────────────────
+function isMobile() { return window.innerWidth <= 768; }
+
+function renderOpCards(ops, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const hoje = new Date().toISOString().split('T')[0];
+  const fmtD = d => d ? d.split('-').reverse().join('/') : '—';
+
+  container.innerHTML = ops.map(op => {
+    const pct = op.quantidade > 0 ? Math.round((op.entregue / op.quantidade) * 100) : 0;
+    const atrasada = op.dataPrevisaoFinal && op.dataPrevisaoFinal < hoje && op.situacao !== 'Finalizado' && op.situacao !== 'Cancelado';
+    const cls = op.situacao === 'Finalizado' ? 'finalizado' : atrasada ? 'atrasada' : op.situacao === 'Finalizado parcial' ? 'parcial' : '';
+    return `<div class="op-card-mobile ${cls}" onclick="openModal('${op.id}')">
+      <div class="op-card-top">
+        <span class="op-card-num">#${op.numero}</span>
+        <span class="op-card-produto">${op.produto || '—'}</span>
+        ${badgeHTML(op.situacao)}
+      </div>
+      <div class="op-card-bottom">
+        <span class="op-card-resp">${op.responsavel || '—'}</span>
+        <div class="op-card-progress">
+          <div class="op-card-bar"><div class="op-card-bar-fill" style="width:${pct}%"></div></div>
+          <span class="op-card-qtd">${op.entregue}/${op.quantidade}</span>
+        </div>
+        <span class="op-card-previsao">${fmtD(op.dataPrevisaoFinal)}</span>
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty">Nenhuma ordem encontrada.</div>';
+}
+
+// Intercept renderOPs para também renderizar cards mobile
+const _origRenderOPs = renderOPs;
+renderOPs = function() {
+  _origRenderOPs();
+  if (isMobile()) {
+    // Filtrar igual ao renderOPs
+    const sitFilt = document.getElementById('filter-situacao')?.value || '';
+    const respFilt = document.getElementById('filter-resp')?.value || '';
+    const busca = (document.getElementById('search-ops')?.value || '').toLowerCase();
+    const ops = allOPs.filter(o => {
+      if (o.responsavel === 'PRODUCAO INTERNA') return false;
+      if (!isMaster && appUsuario && o.responsavel !== appUsuario) return false;
+      if (sitFilt && o.situacao !== sitFilt) return false;
+      if (respFilt && o.responsavel !== respFilt) return false;
+      if (busca && !o.produto?.toLowerCase().includes(busca) && !o.sku?.toLowerCase().includes(busca)) return false;
+      return true;
+    });
+    renderOpCards(ops, 'ops-mobile-cards');
+  }
+};
+
+// Intercept renderMaxOps para cards mobile
+const _origRenderMaxOps = renderMaxOps;
+renderMaxOps = function() {
+  _origRenderMaxOps();
+  if (isMobile()) {
+    const sitFilt = document.getElementById('filter-situacao-maxops')?.value || '';
+    const busca = (document.getElementById('search-maxops')?.value || '').toLowerCase();
+    const ops = allOPs.filter(o => {
+      if (o.responsavel !== 'PRODUCAO INTERNA') return false;
+      if (sitFilt && o.situacao !== sitFilt) return false;
+      if (busca && !o.produto?.toLowerCase().includes(busca) && !o.sku?.toLowerCase().includes(busca)) return false;
+      return true;
+    });
+    renderOpCards(ops, 'maxops-mobile-cards');
+  }
 };
 
 // ─── MOBILE DETECTION ─────────────────────────────────────────────
