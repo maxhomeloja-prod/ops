@@ -2905,26 +2905,29 @@ async function confirmarEntrega() {
       const hoje = new Date();
       const previsao = new Date(hoje.getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       const dataHoje = hoje.toISOString().split('T')[0];
-      for (const item of carrinho) {
-        try {
-          const ultimaOPData = await apiGet('ordens_producao', '?select=op_numero&order=op_numero.desc&limit=1');
-          const proximoNum = Array.isArray(ultimaOPData) && ultimaOPData.length > 0 ? ultimaOPData[0].op_numero + 1 : 1;
-          await apiPost('ordens_producao', {
-            op_numero: proximoNum,
-            nome: `OP #${String(proximoNum).padStart(4,'0')} — ${item.produto}`,
-            cliente: 'MAXHOME',
-            produto: item.produto,
-            sku: item.sku,
-            responsavel: 'PRODUCAO INTERNA',
-            quantidade: item.qtd,
-            entregue: 0,
-            situacao: 'Em producao',
-            data_previsao_inicio: dataHoje,
-            data_previsao_final: previsao,
-            data_inicio: dataHoje,
-          });
-        } catch(e) { console.error('Erro criando OP interna:', e); }
-      }
+      try {
+        const ultimaOPData = await apiGet('ordens_producao', '?select=op_numero&order=op_numero.desc&limit=1');
+        let proximoNum = Array.isArray(ultimaOPData) && ultimaOPData.length > 0 ? ultimaOPData[0].op_numero + 1 : 1;
+        for (const item of carrinho) {
+          try {
+            await apiPost('ordens_producao', {
+              op_numero: proximoNum,
+              nome: `OP #${String(proximoNum).padStart(4,'0')} — ${item.produto}`,
+              cliente: 'MAXHOME',
+              produto: item.produto,
+              sku: item.sku,
+              responsavel: 'PRODUCAO INTERNA',
+              quantidade: item.qtd,
+              entregue: 0,
+              situacao: 'Em producao',
+              data_previsao_inicio: dataHoje,
+              data_previsao_final: previsao,
+              data_inicio: dataHoje,
+            });
+            proximoNum++;
+          } catch(e) { console.error('Erro criando OP interna:', e); }
+        }
+      } catch(e) { console.error('Erro buscando último número de OP:', e); }
     }
 
     // 3. Gerar PDF
