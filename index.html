@@ -897,6 +897,7 @@
     <button class="nav-btn" onclick="showView('registrar')">✏️ Entregas</button>
     <button class="nav-btn" id="nav-maxentregas" onclick="showView('maxentregas')" style="display:none">📦 Max Entregas</button>
     <button class="nav-btn" id="nav-pagamentos" onclick="showView('pagamentos')" style="display:none">💰 Pagamentos</button>
+    <button class="nav-btn" id="nav-caixa" onclick="showView('caixa', this)" style="display:none">💵 Caixa</button>
     <button class="nav-btn" id="nav-lancamentos" onclick="showView('lancamentos', this)" style="display:none">📝 Lançamentos</button>
     <button class="nav-btn" id="nav-categorizacao" onclick="showView('categorizacao', this)" style="display:none">🏷️ Categorização <span id="badge-pendentes" style="display:none;background:var(--red);color:white;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
     <button class="nav-btn" id="nav-balancete" onclick="showView('balancete', this)" style="display:none">📊 Balancete</button>
@@ -1301,6 +1302,8 @@
         <option value="06af0934-2b30-4981-ab0a-ce75725858df">Maxhome</option>
         <option value="3ea4e54f-10a9-4ece-8815-442698002499">Lume Decor</option>
         <option value="externos">Lançamentos Externos</option>
+        <option value="caixa_ent">Caixa — Entradas</option>
+        <option value="caixa_sai">Caixa — Saídas</option>
       </select>
       <select class="dash-filter-select" id="cat-filter-tipo" onchange="loadCategorizacao()">
         <option value="">Todos os tipos</option>
@@ -1332,6 +1335,8 @@
         <option value="06af0934-2b30-4981-ab0a-ce75725858df">Maxhome</option>
         <option value="3ea4e54f-10a9-4ece-8815-442698002499">Lume Decor</option>
         <option value="externos">Lançamentos Externos</option>
+        <option value="caixa_ent">Caixa — Entradas</option>
+        <option value="caixa_sai">Caixa — Saídas</option>
       </select>
       <input type="month" class="dash-filter-select" id="bal-filter-mes" onchange="loadBalancete()">
       <select class="dash-filter-select" id="bal-filter-tipo" onchange="renderBalancete()">
@@ -1516,6 +1521,176 @@
           <button class="btn btn-outline" onclick="fecharModalLanc()">Cancelar</button>
           <button class="btn btn-primary" onclick="salvarLancamento()">✓ Salvar</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- VIEW: CAIXA -->
+  <div class="view" id="view-caixa">
+
+    <!-- Tabs internas -->
+    <div style="display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--border)">
+      <button id="caixa-tab-entradas" onclick="switchCaixaTab('entradas')"
+        style="padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--teal-dark);border-bottom:2px solid var(--teal);margin-bottom:-2px">
+        📥 Entradas
+      </button>
+      <button id="caixa-tab-saidas" onclick="switchCaixaTab('saidas')"
+        style="padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--gray);border-bottom:2px solid transparent;margin-bottom:-2px">
+        📤 Saídas (Pagamentos)
+      </button>
+    </div>
+
+    <!-- Painel Entradas -->
+    <div id="caixa-panel-entradas">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div class="pag-filters" style="margin:0">
+          <select class="dash-filter-select" id="ent-filter-tipo" onchange="renderEntradas()">
+            <option value="">Todos os tipos</option>
+            <option value="DINHEIRO">Dinheiro</option>
+            <option value="CHEQUE">Cheque</option>
+          </select>
+          <select class="dash-filter-select" id="ent-filter-disp" onchange="renderEntradas()">
+            <option value="">Todas</option>
+            <option value="disponivel">Com saldo disponível</option>
+            <option value="esgotado">Esgotadas</option>
+          </select>
+          <input type="date" class="dash-filter-select" id="ent-filter-de" onchange="renderEntradas()">
+          <input type="date" class="dash-filter-select" id="ent-filter-ate" onchange="renderEntradas()">
+        </div>
+        <button class="btn btn-primary" onclick="abrirModalEntrada()">+ Nova Entrada</button>
+      </div>
+      <div id="ent-summary" style="margin-bottom:14px"></div>
+      <div class="loading" id="ent-loading"><div class="spinner"></div><div>Carregando...</div></div>
+      <div id="ent-table-wrap" style="display:none">
+        <table class="pag-table">
+          <thead><tr>
+            <th>Data</th><th>Vencimento</th><th>Descrição</th><th>Tipo</th>
+            <th>Valor Original</th><th>Disponível</th><th>Categoria</th><th></th>
+          </tr></thead>
+          <tbody id="ent-tbody"></tbody>
+        </table>
+        <div class="empty" id="ent-empty" style="display:none">Nenhuma entrada encontrada.</div>
+      </div>
+    </div>
+
+    <!-- Painel Saídas -->
+    <div id="caixa-panel-saidas" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div class="pag-filters" style="margin:0">
+          <input type="date" class="dash-filter-select" id="sai-filter-de" onchange="renderSaidas()">
+          <input type="date" class="dash-filter-select" id="sai-filter-ate" onchange="renderSaidas()">
+        </div>
+        <button class="btn btn-primary" onclick="abrirModalSaida()">+ Registrar Pagamento</button>
+      </div>
+      <div id="sai-summary" style="margin-bottom:14px"></div>
+      <div class="loading" id="sai-loading"><div class="spinner"></div><div>Carregando...</div></div>
+      <div id="sai-table-wrap" style="display:none">
+        <table class="pag-table">
+          <thead><tr>
+            <th>Data</th><th>Descrição</th><th>Valor</th><th>Categoria</th><th>Origens</th><th>Ações</th>
+          </tr></thead>
+          <tbody id="sai-tbody"></tbody>
+        </table>
+        <div class="empty" id="sai-empty" style="display:none">Nenhum pagamento encontrado.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ENTRADA -->
+  <div id="ent-modal-overlay" onclick="fecharModalEnt(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:16px;width:100%;max-width:480px;margin:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-size:17px;font-weight:700;color:var(--charcoal)" id="ent-modal-title">📥 Nova Entrada</div>
+        <button class="modal-close" onclick="fecharModalEnt()">✕</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+        <input type="hidden" id="ent-edit-id">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="me-field"><label>Data</label><input type="date" id="ent-edit-data"></div>
+          <div class="me-field"><label>Tipo</label>
+            <select id="ent-edit-tipo" onchange="toggleCamposCheque()" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+              <option value="DINHEIRO">Dinheiro</option>
+              <option value="CHEQUE">Cheque</option>
+            </select>
+          </div>
+        </div>
+        <div class="me-field"><label>Cliente</label><input type="text" id="ent-edit-cliente" placeholder="Nome do cliente..."></div>
+        <div class="me-field"><label>Descrição</label><input type="text" id="ent-edit-desc" placeholder="Ex: Recebimento venda, Saque banco..."></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="me-field"><label>Valor (R$)</label><input type="number" id="ent-edit-valor" step="0.01" min="0.01" placeholder="0,00"></div>
+          <div class="me-field">
+            <label>Categoria</label>
+            <select id="ent-edit-cat" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Campos exclusivos de CHEQUE -->
+        <div id="ent-campos-cheque" style="display:none;flex-direction:column;gap:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:0.5px;padding-top:4px;border-top:1px solid var(--border)">Dados do Cheque</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="me-field"><label>Banco Emissor</label><input type="text" id="ent-edit-banco" placeholder="Ex: Bradesco, Itaú..."></div>
+            <div class="me-field"><label>Número do Cheque</label><input type="text" id="ent-edit-numcheque" placeholder="000000"></div>
+          </div>
+          <div class="me-field"><label>Nome no Cheque</label><input type="text" id="ent-edit-nomecheque" placeholder="Nome conforme cheque..."></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="me-field"><label>Agência / Conta</label><input type="text" id="ent-edit-agencia" placeholder="Ex: 1234 / 56789-0"></div>
+            <div class="me-field"><label>Vencimento</label><input type="date" id="ent-edit-venc"></div>
+          </div>
+        </div>
+
+        <div class="me-field"><label>Observação</label><input type="text" id="ent-edit-obs" placeholder="Opcional..."></div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:space-between">
+        <button class="btn-danger-outline" id="ent-btn-excluir" style="display:none" onclick="excluirEntrada()">🗑 Excluir</button>
+        <div style="display:flex;gap:10px;margin-left:auto">
+          <button class="btn btn-outline" onclick="fecharModalEnt()">Cancelar</button>
+          <button class="btn btn-primary" onclick="salvarEntrada()">✓ Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL SAÍDA (pagamento) -->
+  <div id="sai-modal-overlay" onclick="fecharModalSai(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:16px;width:100%;max-width:560px;margin:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-size:17px;font-weight:700;color:var(--charcoal)">📤 Registrar Pagamento</div>
+        <button class="modal-close" onclick="fecharModalSai()">✕</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="me-field"><label>Data do Pagamento</label><input type="date" id="sai-edit-data"></div>
+          <div class="me-field"><label>Valor Total (R$)</label><input type="number" id="sai-edit-valor" step="0.01" min="0.01" placeholder="0,00" oninput="validarSaldoCaixa()"></div>
+        </div>
+        <div class="me-field"><label>Fornecedor</label><input type="text" id="sai-edit-forn" placeholder="Nome do fornecedor..."></div>
+        <div class="me-field"><label>Descrição</label><input type="text" id="sai-edit-desc" placeholder="Ex: Pagamento fatura, Compra matéria prima..."></div>
+        <div class="me-field">
+          <label>Categoria</label>
+          <select id="sai-edit-cat" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="me-field"><label>Observação</label><input type="text" id="sai-edit-obs" placeholder="Opcional..."></div>
+
+        <!-- Seleção de entradas -->
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">
+            Selecionar origens do caixa
+          </label>
+          <div id="sai-entradas-list" style="border:1.5px solid var(--border);border-radius:8px;overflow:hidden;max-height:220px;overflow-y:auto"></div>
+          <div style="margin-top:8px;font-size:12px;color:var(--gray)">
+            Disponível selecionado: <strong id="sai-total-sel" style="color:var(--teal-dark)">R$ 0,00</strong>
+            &nbsp;|&nbsp; Valor do pagamento: <strong id="sai-valor-disp">R$ 0,00</strong>
+          </div>
+          <div id="sai-erro-saldo" style="display:none;font-size:12px;color:var(--red);margin-top:4px">⚠️ Saldo selecionado insuficiente para o valor do pagamento.</div>
+        </div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="fecharModalSai()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarSaida()">✓ Confirmar Pagamento</button>
       </div>
     </div>
   </div>
@@ -2234,6 +2409,7 @@ function showView(v, btn) {
   if (v === 'ops') { renderOPs(); }
   if (v === 'maxops') renderMaxOps();
   if (v === 'maxentregas') loadMaxEntregas();
+  if (v === 'caixa') loadCaixa();
   if (v === 'lancamentos') loadLancamentos();
   if (v === 'categorizacao') loadCategorizacao();
   if (v === 'balancete') loadBalancete();
@@ -2762,6 +2938,8 @@ async function appLogin() {
   if (navCMO) navCMO.style.display = (nome === 'PRODUCAO INTERNA') ? 'none' : '';
   const navMaxEnt = document.getElementById('nav-maxentregas');
   if (navMaxEnt) navMaxEnt.style.display = isMaster ? '' : 'none';
+  const navCaixa = document.getElementById('nav-caixa');
+  if (navCaixa) navCaixa.style.display = isMaster ? '' : 'none';
   const navLanc = document.getElementById('nav-lancamentos');
   if (navLanc) navLanc.style.display = isMaster ? '' : 'none';
   const navCat = document.getElementById('nav-categorizacao');
@@ -3972,6 +4150,445 @@ async function finPatch(path, body) {
 }
 
 
+// ─── CAIXA ────────────────────────────────────────────────────────
+let _caixaEntradas = [];
+let _caixaSaidas   = [];
+let _caixaMovs     = [];
+let _caixaTab      = 'entradas';
+
+async function loadCaixa() {
+  if (_categorias.length === 0) {
+    const cats = await finGet('categorias?select=*&ativa=eq.true&order=tipo,nome');
+    _categorias = Array.isArray(cats) ? cats : [];
+  }
+  const [ents, sais, movs] = await Promise.all([
+    finGet('caixa_entradas?select=*,categorias(nome,tipo)&order=data.desc&limit=500'),
+    finGet('caixa_saidas?select=*,categorias(nome,tipo)&order=data.desc&limit=500'),
+    finGet('caixa_movimentos?select=*&limit=2000')
+  ]);
+  _caixaEntradas = Array.isArray(ents) ? ents : [];
+  _caixaSaidas   = Array.isArray(sais) ? sais : [];
+  _caixaMovs     = Array.isArray(movs) ? movs : [];
+  switchCaixaTab(_caixaTab);
+}
+
+function switchCaixaTab(tab) {
+  _caixaTab = tab;
+  document.getElementById('caixa-panel-entradas').style.display = tab === 'entradas' ? 'block' : 'none';
+  document.getElementById('caixa-panel-saidas').style.display   = tab === 'saidas'   ? 'block' : 'none';
+  const btnE = document.getElementById('caixa-tab-entradas');
+  const btnS = document.getElementById('caixa-tab-saidas');
+  btnE.style.color       = tab === 'entradas' ? 'var(--teal-dark)' : 'var(--gray)';
+  btnE.style.borderBottom= tab === 'entradas' ? '2px solid var(--teal)' : '2px solid transparent';
+  btnS.style.color       = tab === 'saidas'   ? 'var(--teal-dark)' : 'var(--gray)';
+  btnS.style.borderBottom= tab === 'saidas'   ? '2px solid var(--teal)' : '2px solid transparent';
+  if (tab === 'entradas') renderEntradas();
+  else renderSaidas();
+}
+
+// ── ENTRADAS ──────────────────────────────────────────────────────
+function getDisponivelEntrada(entId) {
+  const utilizado = _caixaMovs.filter(m => m.entrada_id === entId).reduce((s,m) => s + Number(m.valor_utilizado), 0);
+  const ent = _caixaEntradas.find(e => e.id === entId);
+  return ent ? Math.max(0, Number(ent.valor_original) - utilizado) : 0;
+}
+
+function renderEntradas() {
+  const tipoF = document.getElementById('ent-filter-tipo').value;
+  const dispF = document.getElementById('ent-filter-disp').value;
+  const deF   = document.getElementById('ent-filter-de').value;
+  const ateF  = document.getElementById('ent-filter-ate').value;
+  const fmt   = n => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
+  const fmtD  = d => d ? d.substring(0,10).split('-').reverse().join('/') : '—';
+
+  let rows = _caixaEntradas.map(e => ({ ...e, disponivel: getDisponivelEntrada(e.id) }));
+  if (tipoF) rows = rows.filter(e => e.tipo === tipoF);
+  if (dispF === 'disponivel') rows = rows.filter(e => e.disponivel > 0);
+  if (dispF === 'esgotado')   rows = rows.filter(e => e.disponivel <= 0);
+  if (deF)  rows = rows.filter(e => e.data >= deF);
+  if (ateF) rows = rows.filter(e => e.data <= ateF);
+
+  const totalDisp = rows.reduce((s,e) => s + e.disponivel, 0);
+  const totalOrig = rows.reduce((s,e) => s + Number(e.valor_original), 0);
+
+  document.getElementById('ent-loading').style.display = 'none';
+  document.getElementById('ent-table-wrap').style.display = 'block';
+  document.getElementById('ent-summary').innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div class="pag-summary-card" style="border-top:3px solid var(--green)">
+        <div class="pag-summary-label">Total Entradas</div>
+        <div class="pag-summary-val" style="color:var(--green)">${fmt(totalOrig)}</div>
+      </div>
+      <div class="pag-summary-card" style="border-top:3px solid var(--teal)">
+        <div class="pag-summary-label">Disponível em Caixa</div>
+        <div class="pag-summary-val" style="color:var(--teal-dark)">${fmt(totalDisp)}</div>
+      </div>
+    </div>`;
+
+  if (!rows.length) {
+    document.getElementById('ent-tbody').innerHTML = '';
+    document.getElementById('ent-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('ent-empty').style.display = 'none';
+  document.getElementById('ent-tbody').innerHTML = rows.map(e => {
+    const pctUsado = ((Number(e.valor_original) - e.disponivel) / Number(e.valor_original) * 100).toFixed(0);
+    const corDisp  = e.disponivel <= 0 ? 'var(--gray)' : e.disponivel < Number(e.valor_original) ? 'var(--orange)' : 'var(--green)';
+    return `<tr style="cursor:pointer" onclick="editarEntrada('${e.id}')">
+      <td style="white-space:nowrap">${fmtD(e.data)}</td>
+      <td style="white-space:nowrap;color:${e.tipo==='CHEQUE'?'var(--orange)':'var(--gray)'}">${e.data_vencimento ? fmtD(e.data_vencimento) : '—'}</td>
+      <td style="max-width:200px">
+        <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.descricao}</div>
+        ${e.cliente?`<div style="font-size:11px;color:var(--gray)">${e.cliente}</div>`:''}
+        ${e.tipo==='CHEQUE'&&e.numero_cheque?`<div style="font-size:10px;color:var(--gray)">Cheque ${e.numero_cheque} · ${e.banco_emissor||''}</div>`:''}
+      </td>
+      <td><span class="pag-badge ${e.tipo==='DINHEIRO'?'lancado':'aberto'}">${e.tipo}</span></td>
+      <td style="font-weight:700;color:var(--green)">${fmt(e.valor_original)}</td>
+      <td style="font-weight:700;color:${corDisp}">${fmt(e.disponivel)}</td>
+      <td style="font-size:12px;color:var(--gray)">${e.categorias?.nome||'—'}</td>
+      <td style="font-size:11px;color:var(--gray)">${pctUsado}% usado</td>
+    </tr>`;
+  }).join('');
+}
+
+function abrirModalEntrada() {
+  document.getElementById('ent-edit-id').value = '';
+  document.getElementById('ent-edit-data').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ent-edit-tipo').value = 'DINHEIRO';
+  document.getElementById('ent-edit-venc').value = '';
+  document.getElementById('ent-edit-desc').value = '';
+  document.getElementById('ent-edit-valor').value = '';
+  document.getElementById('ent-edit-obs').value = '';
+  document.getElementById('ent-edit-cliente').value = '';
+  document.getElementById('ent-edit-banco').value = '';
+  document.getElementById('ent-edit-numcheque').value = '';
+  document.getElementById('ent-edit-nomecheque').value = '';
+  document.getElementById('ent-edit-agencia').value = '';
+  document.getElementById('ent-btn-excluir').style.display = 'none';
+  document.getElementById('ent-modal-title').textContent = '📥 Nova Entrada';
+  toggleCamposCheque();
+  _popularSelectCat('ent-edit-cat', null, 'RECEITA');
+  document.getElementById('ent-modal-overlay').style.display = 'flex';
+}
+
+function editarEntrada(id) {
+  const e = _caixaEntradas.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('ent-edit-id').value = id;
+  document.getElementById('ent-edit-data').value = e.data;
+  document.getElementById('ent-edit-tipo').value = e.tipo;
+  document.getElementById('ent-edit-venc').value = e.data_vencimento || '';
+  document.getElementById('ent-edit-desc').value = e.descricao;
+  document.getElementById('ent-edit-valor').value = e.valor_original;
+  document.getElementById('ent-edit-obs').value = e.observacao || '';
+  document.getElementById('ent-edit-cliente').value = e.cliente || '';
+  document.getElementById('ent-edit-banco').value = e.banco_emissor || '';
+  document.getElementById('ent-edit-numcheque').value = e.numero_cheque || '';
+  document.getElementById('ent-edit-nomecheque').value = e.nome_cheque || '';
+  document.getElementById('ent-edit-agencia').value = e.agencia_conta || '';
+  document.getElementById('ent-btn-excluir').style.display = 'inline-flex';
+  document.getElementById('ent-modal-title').textContent = '✏️ Editar Entrada';
+  toggleCamposCheque();
+  _popularSelectCat('ent-edit-cat', e.categoria_id, 'RECEITA');
+  document.getElementById('ent-modal-overlay').style.display = 'flex';
+}
+
+function toggleCamposCheque() {
+  const tipo = document.getElementById('ent-edit-tipo').value;
+  const wrap = document.getElementById('ent-campos-cheque');
+  if (wrap) wrap.style.display = tipo === 'CHEQUE' ? 'flex' : 'none';
+}
+// Manter compatibilidade
+function toggleVencimento() { toggleCamposCheque(); }
+
+function fecharModalEnt(e) {
+  if (e && e.target !== document.getElementById('ent-modal-overlay')) return;
+  document.getElementById('ent-modal-overlay').style.display = 'none';
+}
+
+async function salvarEntrada() {
+  const id    = document.getElementById('ent-edit-id').value;
+  const data  = document.getElementById('ent-edit-data').value;
+  const tipo  = document.getElementById('ent-edit-tipo').value;
+  const venc  = document.getElementById('ent-edit-venc').value || null;
+  const desc  = document.getElementById('ent-edit-desc').value.trim();
+  const valor = parseFloat(document.getElementById('ent-edit-valor').value);
+  const catId = document.getElementById('ent-edit-cat').value || null;
+  const obs   = document.getElementById('ent-edit-obs').value || null;
+
+  if (!data || !desc || !valor || valor <= 0) { toast('Preencha data, descrição e valor.', 'error'); return; }
+  if (tipo === 'CHEQUE' && !venc) { toast('Informe a data de vencimento do cheque.', 'error'); return; }
+
+  const cliente    = document.getElementById('ent-edit-cliente').value.trim() || null;
+  const banco      = document.getElementById('ent-edit-banco').value.trim() || null;
+  const numcheque  = document.getElementById('ent-edit-numcheque').value.trim() || null;
+  const nomecheque = document.getElementById('ent-edit-nomecheque').value.trim() || null;
+  const agencia    = document.getElementById('ent-edit-agencia').value.trim() || null;
+  const body = { data, tipo, data_vencimento: venc, descricao: desc, valor_original: valor, categoria_id: catId, observacao: obs, cliente, banco_emissor: banco, numero_cheque: numcheque, nome_cheque: nomecheque, agencia_conta: agencia };
+
+  let ok;
+  if (id) {
+    // Ao editar, recalcular disponível
+    const utilizado = _caixaMovs.filter(m => m.entrada_id === id).reduce((s,m) => s + Number(m.valor_utilizado), 0);
+    body.valor_disponivel = Math.max(0, valor - utilizado);
+    ok = await finPatch('caixa_entradas?id=eq.' + id, body);
+  } else {
+    body.valor_disponivel = valor;
+    const res = await fetch(FIN_URL + '/caixa_entradas', {
+      method: 'POST',
+      headers: { 'apikey': FIN_KEY, 'Authorization': 'Bearer ' + FIN_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(body)
+    });
+    ok = res.ok;
+  }
+  if (ok) {
+    document.getElementById('ent-modal-overlay').style.display = 'none';
+    toast('✓ Entrada salva!', 'success');
+    loadCaixa();
+  } else { toast('Erro ao salvar.', 'error'); }
+}
+
+async function excluirEntrada() {
+  const id = document.getElementById('ent-edit-id').value;
+  const utilizado = _caixaMovs.filter(m => m.entrada_id === id).reduce((s,m) => s + Number(m.valor_utilizado), 0);
+  if (utilizado > 0) { toast('Esta entrada já foi utilizada em pagamentos. Reverta os pagamentos primeiro.', 'error'); return; }
+  if (!confirm('Excluir esta entrada permanentemente?')) return;
+  const res = await fetch(FIN_URL + '/caixa_entradas?id=eq.' + id, {
+    method: 'DELETE', headers: { 'apikey': FIN_KEY, 'Authorization': 'Bearer ' + FIN_KEY }
+  });
+  if (res.ok) {
+    document.getElementById('ent-modal-overlay').style.display = 'none';
+    toast('Entrada excluída.', 'success'); loadCaixa();
+  }
+}
+
+// ── SAÍDAS ────────────────────────────────────────────────────────
+function renderSaidas() {
+  const deF  = document.getElementById('sai-filter-de').value;
+  const ateF = document.getElementById('sai-filter-ate').value;
+  const fmt  = n => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
+  const fmtD = d => d ? d.substring(0,10).split('-').reverse().join('/') : '—';
+
+  let rows = _caixaSaidas;
+  if (deF)  rows = rows.filter(s => s.data >= deF);
+  if (ateF) rows = rows.filter(s => s.data <= ateF);
+
+  const total = rows.reduce((s,r) => s + Number(r.valor_total), 0);
+  document.getElementById('sai-loading').style.display = 'none';
+  document.getElementById('sai-table-wrap').style.display = 'block';
+  document.getElementById('sai-summary').innerHTML = `
+    <div style="display:flex;gap:12px">
+      <div class="pag-summary-card" style="border-top:3px solid var(--red)">
+        <div class="pag-summary-label">Total Saídas</div>
+        <div class="pag-summary-val" style="color:var(--red)">${fmt(total)}</div>
+      </div>
+    </div>`;
+
+  if (!rows.length) {
+    document.getElementById('sai-tbody').innerHTML = '';
+    document.getElementById('sai-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('sai-empty').style.display = 'none';
+  document.getElementById('sai-tbody').innerHTML = rows.map(s => {
+    const movs = _caixaMovs.filter(m => m.saida_id === s.id);
+    const origens = movs.map(m => {
+      const ent = _caixaEntradas.find(e => e.id === m.entrada_id);
+      return ent ? `${ent.tipo} ${fmt(m.valor_utilizado)}` : '';
+    }).filter(Boolean).join(' + ');
+    return `<tr>
+      <td style="white-space:nowrap">${fmtD(s.data)}</td>
+      <td>
+        <div>${s.descricao}</div>
+        ${s.fornecedor?`<div style="font-size:11px;color:var(--gray)">${s.fornecedor}</div>`:''}
+      </td>
+      <td style="font-weight:700;color:var(--red)">${fmt(s.valor_total)}</td>
+      <td style="font-size:12px;color:var(--gray)">${s.categorias?.nome||'—'}</td>
+      <td style="font-size:11px;color:var(--gray)">${origens||'—'}</td>
+      <td><button class="btn-pag btn-marcar-aberto" onclick="reverterSaida('${s.id}')">↩ Reverter</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function abrirModalSaida() {
+  document.getElementById('sai-edit-data').value = new Date().toISOString().split('T')[0];
+  document.getElementById('sai-edit-valor').value = '';
+  document.getElementById('sai-edit-forn').value = '';
+  document.getElementById('sai-edit-desc').value = '';
+  document.getElementById('sai-edit-obs').value = '';
+  document.getElementById('sai-total-sel').textContent = 'R$ 0,00';
+  document.getElementById('sai-valor-disp').textContent = 'R$ 0,00';
+  document.getElementById('sai-erro-saldo').style.display = 'none';
+  _popularSelectCat('sai-edit-cat', null, 'DESPESA');
+  _renderEntradasDisp();
+  document.getElementById('sai-modal-overlay').style.display = 'flex';
+}
+
+function _renderEntradasDisp() {
+  const fmt = n => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
+  const fmtD = d => d ? d.substring(0,10).split('-').reverse().join('/') : '—';
+  const disponiveis = _caixaEntradas
+    .map(e => ({ ...e, disponivel: getDisponivelEntrada(e.id) }))
+    .filter(e => e.disponivel > 0)
+    .sort((a,b) => a.data < b.data ? -1 : 1);
+
+  if (!disponiveis.length) {
+    document.getElementById('sai-entradas-list').innerHTML = '<div style="padding:14px;font-size:13px;color:var(--gray);text-align:center">Nenhuma entrada disponível em caixa.</div>';
+    return;
+  }
+  document.getElementById('sai-entradas-list').innerHTML = disponiveis.map(e => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+      <input type="checkbox" id="ent-sel-${e.id}" onchange="calcTotalSel()" style="cursor:pointer;width:16px;height:16px">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--charcoal)">${e.descricao}</div>
+        <div style="font-size:11px;color:var(--gray)">${fmtD(e.data)} · ${e.tipo}${e.data_vencimento?' · Venc: '+fmtD(e.data_vencimento):''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:700;color:var(--teal-dark)">${fmt(e.disponivel)}</div>
+        <div style="font-size:10px;color:var(--gray)">disponível</div>
+      </div>
+      <div>
+        <input type="number" id="val-sel-${e.id}" step="0.01" min="0.01" max="${e.disponivel}" placeholder="${e.disponivel.toFixed(2)}"
+          style="width:80px;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;display:none"
+          oninput="calcTotalSel()">
+      </div>
+    </div>`).join('');
+
+  // Mostrar input de valor quando checkbox marcado
+  disponiveis.forEach(e => {
+    document.getElementById('ent-sel-' + e.id)?.addEventListener('change', function() {
+      const inp = document.getElementById('val-sel-' + e.id);
+      if (this.checked) {
+        inp.style.display = 'block';
+        inp.value = '';
+      } else {
+        inp.style.display = 'none';
+        inp.value = '';
+      }
+      calcTotalSel();
+    });
+  });
+}
+
+function calcTotalSel() {
+  const fmt = n => 'R$ ' + n.toFixed(2).replace('.', ',');
+  const disponiveis = _caixaEntradas.map(e => ({ ...e, disponivel: getDisponivelEntrada(e.id) })).filter(e => e.disponivel > 0);
+  let totalSel = 0;
+  disponiveis.forEach(e => {
+    const cb = document.getElementById('ent-sel-' + e.id);
+    const inp = document.getElementById('val-sel-' + e.id);
+    if (cb?.checked) {
+      const v = parseFloat(inp?.value) || e.disponivel;
+      totalSel += Math.min(v, e.disponivel);
+    }
+  });
+  const valorPag = parseFloat(document.getElementById('sai-edit-valor').value) || 0;
+  document.getElementById('sai-total-sel').textContent = fmt(totalSel);
+  document.getElementById('sai-valor-disp').textContent = fmt(valorPag);
+  const insuf = valorPag > 0 && totalSel < valorPag - 0.01;
+  document.getElementById('sai-erro-saldo').style.display = insuf ? 'block' : 'none';
+}
+
+function validarSaldoCaixa() { calcTotalSel(); }
+
+function fecharModalSai(e) {
+  if (e && e.target !== document.getElementById('sai-modal-overlay')) return;
+  document.getElementById('sai-modal-overlay').style.display = 'none';
+}
+
+async function confirmarSaida() {
+  const data  = document.getElementById('sai-edit-data').value;
+  const valor = parseFloat(document.getElementById('sai-edit-valor').value);
+  const desc  = document.getElementById('sai-edit-desc').value.trim();
+  const catId = document.getElementById('sai-edit-cat').value || null;
+  const obs   = document.getElementById('sai-edit-obs').value || null;
+  if (!data || !desc || !valor || valor <= 0) { toast('Preencha data, descrição e valor.', 'error'); return; }
+
+  // Coletar entradas selecionadas
+  const disponiveis = _caixaEntradas.map(e => ({ ...e, disponivel: getDisponivelEntrada(e.id) })).filter(e => e.disponivel > 0);
+  const selecionadas = [];
+  disponiveis.forEach(e => {
+    const cb  = document.getElementById('ent-sel-' + e.id);
+    const inp = document.getElementById('val-sel-' + e.id);
+    if (cb?.checked) {
+      const v = Math.min(parseFloat(inp?.value) || e.disponivel, e.disponivel);
+      if (v > 0) selecionadas.push({ id: e.id, valor: v, disponivel: e.disponivel });
+    }
+  });
+
+  if (!selecionadas.length) { toast('Selecione ao menos uma entrada do caixa.', 'error'); return; }
+  const totalSel = selecionadas.reduce((s,e) => s + e.valor, 0);
+  if (totalSel < valor - 0.01) { toast('Saldo selecionado insuficiente.', 'error'); return; }
+
+  // 1. Criar saída
+  const resSai = await fetch(FIN_URL + '/caixa_saidas', {
+    method: 'POST',
+    headers: { 'apikey': FIN_KEY, 'Authorization': 'Bearer ' + FIN_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+    body: JSON.stringify({ data, descricao: desc, valor_total: valor, categoria_id: catId, observacao: obs })
+  });
+  if (!resSai.ok) { toast('Erro ao criar saída.', 'error'); return; }
+  const saidaData = await resSai.json();
+  const saidaId = saidaData[0].id;
+
+  // 2. Criar movimentos e atualizar disponível
+  for (const e of selecionadas) {
+    await fetch(FIN_URL + '/caixa_movimentos', {
+      method: 'POST',
+      headers: { 'apikey': FIN_KEY, 'Authorization': 'Bearer ' + FIN_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ saida_id: saidaId, entrada_id: e.id, valor_utilizado: e.valor })
+    });
+    const novoDisp = Math.max(0, e.disponivel - e.valor);
+    await finPatch('caixa_entradas?id=eq.' + e.id, { valor_disponivel: novoDisp });
+  }
+
+  document.getElementById('sai-modal-overlay').style.display = 'none';
+  toast('✓ Pagamento registrado!', 'success');
+  loadCaixa();
+}
+
+async function reverterSaida(saidaId) {
+  if (!confirm('Reverter este pagamento? O saldo das entradas será restaurado.')) return;
+  // Buscar movimentos desta saída
+  const movs = _caixaMovs.filter(m => m.saida_id === saidaId);
+  // Restaurar disponível de cada entrada
+  for (const m of movs) {
+    const ent = _caixaEntradas.find(e => e.id === m.entrada_id);
+    if (ent) {
+      const novoDisp = Math.min(Number(ent.valor_original), getDisponivelEntrada(ent.id) + Number(m.valor_utilizado));
+      await finPatch('caixa_entradas?id=eq.' + ent.id, { valor_disponivel: novoDisp });
+    }
+  }
+  // Deletar saída (movimentos são deletados em cascade)
+  await fetch(FIN_URL + '/caixa_saidas?id=eq.' + saidaId, {
+    method: 'DELETE', headers: { 'apikey': FIN_KEY, 'Authorization': 'Bearer ' + FIN_KEY }
+  });
+  toast('✓ Pagamento revertido!', 'success');
+  loadCaixa();
+}
+
+// Helper: popular select de categoria filtrado por tipo sugerido
+function _popularSelectCat(selId, selectedId, tipoSugerido) {
+  const sel = document.getElementById(selId);
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  const grupos = { DESPESA: [], RECEITA: [] };
+  _categorias.forEach(cat => { if (grupos[cat.tipo]) grupos[cat.tipo].push(cat); });
+  const ordem = tipoSugerido === 'RECEITA' ? ['RECEITA','DESPESA'] : ['DESPESA','RECEITA'];
+  ordem.forEach(tipo => {
+    if (!grupos[tipo].length) return;
+    const og = document.createElement('optgroup');
+    og.label = tipo === tipoSugerido ? `✓ ${tipo} (sugerido)` : tipo;
+    grupos[tipo].forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat.id; opt.textContent = cat.nome;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+  if (selectedId) sel.value = selectedId;
+}
+
+// Integração balancete — incluir caixa nas transações
+
 // ─── LANÇAMENTOS EXTERNOS ─────────────────────────────────────────
 let _lancamentos = [];
 
@@ -4364,15 +4981,30 @@ async function loadBalancete() {
   }
 
   if (empresa === 'externos') {
-    // Carregar lançamentos externos como transações
+    // Lançamentos externos
     let q = 'lancamentos_externos?select=*,categorias(nome,tipo)&situacao=eq.PAGO_RECEBIDO&order=data.desc&limit=1000';
     if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
     const data = await finGet(q);
-    // Converter para formato compatível com renderBalancete
     _balTransacoes = (Array.isArray(data) ? data : []).map(l => ({
-      ...l,
-      tipo: l.tipo_lancamento === 'RECEBER' ? 'CREDIT' : 'DEBIT',
-      status: 'CONFIRMADA'
+      ...l, tipo: l.tipo_lancamento === 'RECEBER' ? 'CREDIT' : 'DEBIT', status: 'CONFIRMADA'
+    }));
+  } else if (empresa === 'caixa_ent') {
+    // Caixa entradas
+    let q = 'caixa_entradas?select=*,categorias(nome,tipo)&order=data.desc&limit=1000';
+    if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
+    const data = await finGet(q);
+    _balTransacoes = (Array.isArray(data) ? data : []).map(e => ({
+      id: e.id, data: e.data, descricao: e.descricao, valor: e.valor_original,
+      tipo: 'CREDIT', status: 'CONFIRMADA', categorias: e.categorias
+    }));
+  } else if (empresa === 'caixa_sai') {
+    // Caixa saídas
+    let q = 'caixa_saidas?select=*,categorias(nome,tipo)&order=data.desc&limit=1000';
+    if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
+    const data = await finGet(q);
+    _balTransacoes = (Array.isArray(data) ? data : []).map(s => ({
+      id: s.id, data: s.data, descricao: s.descricao, valor: s.valor_total,
+      tipo: 'DEBIT', status: 'CONFIRMADA', categorias: s.categorias
     }));
   } else {
     let q = 'transacoes?select=*,categorias(nome,tipo,cor)&status=eq.CONFIRMADA&order=data.desc&limit=1000';
