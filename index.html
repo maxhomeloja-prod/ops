@@ -1449,6 +1449,7 @@
         <select class="dash-filter-select" id="lanc-filter-cat" onchange="renderLancamentos()">
           <option value="">Todas as categorias</option>
         </select>
+        <input type="text" class="dash-filter-select" id="lanc-filter-cf" placeholder="🔍 Cliente / Fornecedor" oninput="renderLancamentos()" style="min-width:180px">
         <input type="date" class="dash-filter-select" id="lanc-filter-de" onchange="renderLancamentos()">
         <input type="date" class="dash-filter-select" id="lanc-filter-ate" onchange="renderLancamentos()">
       </div>
@@ -4628,6 +4629,7 @@ function renderLancamentos() {
   const ate   = document.getElementById('lanc-filter-ate').value;
   const fmt   = n => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
 
+  const cfF   = document.getElementById('lanc-filter-cf')?.value.trim().toLowerCase() || '';
   const sitEff = sit || 'EM_ABERTO';
   let rows = _lancamentos.filter(l => {
     if (tipo && l.tipo_lancamento !== tipo) return false;
@@ -4635,6 +4637,11 @@ function renderLancamentos() {
     if (catF  && l.categoria_id !== catF) return false;
     if (de    && l.data < de) return false;
     if (ate   && l.data > ate) return false;
+    if (cfF) {
+      const cliente    = (l.cliente||'').toLowerCase();
+      const fornecedor = (l.fornecedor||'').toLowerCase();
+      if (!cliente.includes(cfF) && !fornecedor.includes(cfF)) return false;
+    }
     return true;
   });
 
