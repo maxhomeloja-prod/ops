@@ -4454,19 +4454,28 @@ function _renderEntradasDisp() {
         <div style="font-size:10px;color:var(--gray)">disponível</div>
       </div>
       <div>
-        <input type="number" id="val-sel-${e.id}" step="0.01" min="0.01" max="${e.disponivel}" placeholder="${e.disponivel.toFixed(2)}"
+        ${e.tipo === 'CHEQUE'
+        ? `<span id="val-sel-${e.id}" style="font-size:11px;color:var(--gray);display:none">valor fixo</span>`
+        : `<input type="number" id="val-sel-${e.id}" step="0.01" min="0.01" max="${e.disponivel}" placeholder="${e.disponivel.toFixed(2)}"
           style="width:80px;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;display:none"
-          oninput="calcTotalSel()">
+          oninput="calcTotalSel()">`
+      }
       </div>
     </div>`).join('');
 
-  // Mostrar input de valor quando checkbox marcado
+  // Mostrar input de valor parcial apenas para DINHEIRO
   disponiveis.forEach(e => {
     document.getElementById('ent-sel-' + e.id)?.addEventListener('change', function() {
       const inp = document.getElementById('val-sel-' + e.id);
       if (this.checked) {
-        inp.style.display = 'block';
-        inp.value = '';
+        // Cheque: valor fixo, sem parcial
+        if (e.tipo === 'CHEQUE') {
+          inp.style.display = 'none';
+          inp.value = e.disponivel;
+        } else {
+          inp.style.display = 'block';
+          inp.value = '';
+        }
       } else {
         inp.style.display = 'none';
         inp.value = '';
@@ -4484,7 +4493,8 @@ function calcTotalSel() {
     const cb = document.getElementById('ent-sel-' + e.id);
     const inp = document.getElementById('val-sel-' + e.id);
     if (cb?.checked) {
-      const v = parseFloat(inp?.value) || e.disponivel;
+      // Cheque: sempre valor total disponível; Dinheiro: permite parcial
+      const v = e.tipo === 'CHEQUE' ? e.disponivel : (parseFloat(inp?.value) || e.disponivel);
       totalSel += Math.min(v, e.disponivel);
     }
   });
@@ -4517,7 +4527,7 @@ async function confirmarSaida() {
     const cb  = document.getElementById('ent-sel-' + e.id);
     const inp = document.getElementById('val-sel-' + e.id);
     if (cb?.checked) {
-      const v = Math.min(parseFloat(inp?.value) || e.disponivel, e.disponivel);
+      const v = e.tipo === 'CHEQUE' ? e.disponivel : Math.min(parseFloat(inp?.value) || e.disponivel, e.disponivel);
       if (v > 0) selecionadas.push({ id: e.id, valor: v, disponivel: e.disponivel });
     }
   });
