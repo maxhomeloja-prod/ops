@@ -1298,12 +1298,10 @@
   <div class="view" id="view-categorizacao">
     <div class="pag-filters">
       <select class="dash-filter-select" id="cat-filter-empresa" onchange="loadCategorizacao()">
-        <option value="">Todas as empresas</option>
+        <option value="tudo">Todas as empresas</option>
         <option value="06af0934-2b30-4981-ab0a-ce75725858df">Maxhome</option>
         <option value="3ea4e54f-10a9-4ece-8815-442698002499">Lume Decor</option>
-        <option value="externos">Lançamentos Externos</option>
-        <option value="caixa_ent">Caixa — Entradas</option>
-        <option value="caixa_sai">Caixa — Saídas</option>
+        <option value="caixa">Caixa (Físico)</option>
       </select>
       <select class="dash-filter-select" id="cat-filter-tipo" onchange="loadCategorizacao()">
         <option value="">Todos os tipos</option>
@@ -1331,12 +1329,10 @@
   <div class="view" id="view-balancete">
     <div class="pag-filters">
       <select class="dash-filter-select" id="bal-filter-empresa" onchange="loadBalancete()">
-        <option value="">Todas as empresas</option>
+        <option value="tudo">Todas as empresas</option>
         <option value="06af0934-2b30-4981-ab0a-ce75725858df">Maxhome</option>
         <option value="3ea4e54f-10a9-4ece-8815-442698002499">Lume Decor</option>
-        <option value="externos">Lançamentos Externos</option>
-        <option value="caixa_ent">Caixa — Entradas</option>
-        <option value="caixa_sai">Caixa — Saídas</option>
+        <option value="caixa">Caixa (Físico)</option>
       </select>
       <input type="month" class="dash-filter-select" id="bal-filter-mes" onchange="loadBalancete()">
       <select class="dash-filter-select" id="bal-filter-tipo" onchange="renderBalancete()">
@@ -5066,40 +5062,34 @@ async function loadBalancete() {
     fim = `${ano}-${m}-${new Date(ano, m, 0).getDate()}`;
   }
 
-  if (empresa === 'externos') {
-    // Lançamentos externos
-    let q = 'lancamentos_externos?select=*,categorias(nome,tipo)&situacao=eq.PAGO_RECEBIDO&order=data.desc&limit=1000';
-    if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
+  const filtroData = ini ? `&data=gte.${ini}&data=lte.${fim}` : '';
+  let txs = [];
+
+  // Carregar transações bancárias
+  if (empresa === 'tudo' || empresa === '06af0934-2b30-4981-ab0a-ce75725858df' || empresa === '3ea4e54f-10a9-4ece-8815-442698002499') {
+    let q = `transacoes?select=*,categorias(nome,tipo,cor,categoria_pai_id)&status=eq.CONFIRMADA&order=data.desc&limit=1000${filtroData}`;
+    if (empresa !== 'tudo') q += `&empresa_id=eq.${empresa}`;
     const data = await finGet(q);
-    _balTransacoes = (Array.isArray(data) ? data : []).map(l => ({
-      ...l, tipo: l.tipo_lancamento === 'RECEBER' ? 'CREDIT' : 'DEBIT', status: 'CONFIRMADA'
-    }));
-  } else if (empresa === 'caixa_ent') {
-    // Caixa entradas
-    let q = 'caixa_entradas?select=*,categorias(nome,tipo,categoria_pai_id)&order=data.desc&limit=1000';
-    if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
-    const data = await finGet(q);
-    _balTransacoes = (Array.isArray(data) ? data : []).map(e => ({
-      id: e.id, data: e.data, descricao: e.descricao, valor: e.valor_original,
-      tipo: 'CREDIT', status: 'CONFIRMADA', categorias: e.categorias
-    }));
-  } else if (empresa === 'caixa_sai') {
-    // Caixa saídas
-    let q = 'caixa_saidas?select=*,categorias(nome,tipo,categoria_pai_id)&order=data.desc&limit=1000';
-    if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
-    const data = await finGet(q);
-    _balTransacoes = (Array.isArray(data) ? data : []).map(s => ({
-      id: s.id, data: s.data, descricao: s.descricao, valor: s.valor_total,
-      tipo: 'DEBIT', status: 'CONFIRMADA', categorias: s.categorias
-    }));
-  } else {
-    let q = 'transacoes?select=*,categorias(nome,tipo,cor,categoria_pai_id)&status=eq.CONFIRMADA&order=data.desc&limit=1000';
-    if (empresa) q += `&empresa_id=eq.${empresa}`;
-    if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
-    const data = await finGet(q);
-    _balTransacoes = Array.isArray(data) ? data : [];
+    txs = txs.concat(Array.isArray(data) ? data : []);
   }
 
+  // Carregar caixa físico (entradas + saídas)
+  if (empresa === 'tudo' || empresa === 'caixa') {
+    const qEnt = `caixa_entradas?select=*,categorias(nome,tipo,categoria_pai_id)&order=data.desc&limit=1000${filtroData}`;
+    const qSai = `caixa_saidas?select=*,categorias(nome,tipo,categoria_pai_id)&order=data.desc&limit=1000${filtroData}`;
+    const [ents, sais] = await Promise.all([finGet(qEnt), finGet(qSai)]);
+    const entsTx = (Array.isArray(ents) ? ents : []).map(e => ({
+      id: e.id, data: e.data, descricao: e.descricao, valor: e.valor_original,
+      tipo: 'CREDIT', status: 'CONFIRMADA', categorias: e.categorias, origem: 'caixa'
+    }));
+    const saisTx = (Array.isArray(sais) ? sais : []).map(s => ({
+      id: s.id, data: s.data, descricao: s.descricao, valor: s.valor_total,
+      tipo: 'DEBIT', status: 'CONFIRMADA', categorias: s.categorias, origem: 'caixa'
+    }));
+    txs = txs.concat(entsTx, saisTx);
+  }
+
+  _balTransacoes = txs;
   document.getElementById('bal-loading').style.display = 'none';
   document.getElementById('bal-content').style.display = 'block';
   renderBalancete();
