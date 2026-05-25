@@ -4578,7 +4578,9 @@ function _popularSelectCat(selId, selectedId, tipoSugerido) {
   const sel = document.getElementById(selId);
   sel.innerHTML = '<option value="">Selecione...</option>';
   const grupos = { DESPESA: [], RECEITA: [] };
-  _categorias.forEach(cat => { if (grupos[cat.tipo]) grupos[cat.tipo].push(cat); });
+  // Não mostrar categorias pai no select
+  const catsSelecao = _categorias.filter(cat => !_categorias.some(c => c.categoria_pai_id === cat.id));
+  catsSelecao.forEach(cat => { if (grupos[cat.tipo]) grupos[cat.tipo].push(cat); });
   const ordem = tipoSugerido === 'RECEITA' ? ['RECEITA','DESPESA'] : ['DESPESA','RECEITA'];
   ordem.forEach(tipo => {
     if (!grupos[tipo].length) return;
@@ -4602,7 +4604,7 @@ let _lancamentos = [];
 async function loadLancamentos() {
   document.getElementById('lanc-loading').style.display = 'block';
   document.getElementById('lanc-table-wrap').style.display = 'none';
-  const data = await finGet('lancamentos_externos?select=*,categorias(nome,tipo)&order=data.desc&limit=500');
+  const data = await finGet('lancamentos_externos?select=*,categorias(nome,tipo,categoria_pai_id)&order=data.desc&limit=2000');
   _lancamentos = Array.isArray(data) ? data : [];
   document.getElementById('lanc-loading').style.display = 'none';
   document.getElementById('lanc-table-wrap').style.display = 'block';
@@ -4948,7 +4950,12 @@ function abrirCatModal(id) {
   const sel = document.getElementById('cat-edit-categoria');
   sel.innerHTML = '<option value="">Selecione...</option>';
   const grupos = { DESPESA: [], RECEITA: [] };
-  _categorias.forEach(cat => { if (grupos[cat.tipo]) grupos[cat.tipo].push(cat); });
+  // Excluir categorias pai (que têm subcategorias) do select — usar só as filhas ou sem pai
+  const catsSelecao = _categorias.filter(cat => {
+    const temFilha = _categorias.some(c => c.categoria_pai_id === cat.id);
+    return !temFilha; // não mostrar categorias que são pai de outras
+  });
+  catsSelecao.forEach(cat => { if (grupos[cat.tipo]) grupos[cat.tipo].push(cat); });
   // Mostrar tipo esperado primeiro com destaque
   const ordemTipos = tipoEsperado === 'RECEITA' ? ['RECEITA','DESPESA'] : ['DESPESA','RECEITA'];
   ordemTipos.forEach(tipo => {
@@ -5024,7 +5031,7 @@ async function loadBalancete() {
     }));
   } else if (empresa === 'caixa_ent') {
     // Caixa entradas
-    let q = 'caixa_entradas?select=*,categorias(nome,tipo)&order=data.desc&limit=1000';
+    let q = 'caixa_entradas?select=*,categorias(nome,tipo,categoria_pai_id)&order=data.desc&limit=1000';
     if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
     const data = await finGet(q);
     _balTransacoes = (Array.isArray(data) ? data : []).map(e => ({
@@ -5033,7 +5040,7 @@ async function loadBalancete() {
     }));
   } else if (empresa === 'caixa_sai') {
     // Caixa saídas
-    let q = 'caixa_saidas?select=*,categorias(nome,tipo)&order=data.desc&limit=1000';
+    let q = 'caixa_saidas?select=*,categorias(nome,tipo,categoria_pai_id)&order=data.desc&limit=1000';
     if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
     const data = await finGet(q);
     _balTransacoes = (Array.isArray(data) ? data : []).map(s => ({
@@ -5041,7 +5048,7 @@ async function loadBalancete() {
       tipo: 'DEBIT', status: 'CONFIRMADA', categorias: s.categorias
     }));
   } else {
-    let q = 'transacoes?select=*,categorias(nome,tipo,cor)&status=eq.CONFIRMADA&order=data.desc&limit=1000';
+    let q = 'transacoes?select=*,categorias(nome,tipo,cor,categoria_pai_id)&status=eq.CONFIRMADA&order=data.desc&limit=1000';
     if (empresa) q += `&empresa_id=eq.${empresa}`;
     if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
     const data = await finGet(q);
@@ -5073,6 +5080,17 @@ function toggleBalRow(tr) {
   }
 }
 
+
+// Cache de categorias pai para o balancete
+let _catPaiCache = {};
+function _getNomePai(paiId) {
+  if (_catPaiCache[paiId]) return _catPaiCache[paiId];
+  // Buscar sincrono do _categorias já carregado
+  const pai = _categorias.find(c => c.id === paiId);
+  if (pai) { _catPaiCache[paiId] = pai.nome; return pai.nome; }
+  return null;
+}
+
 function renderBalancete() {
   const filtroTipo = document.getElementById('bal-filter-tipo').value;
   const fmt = n => 'R$ ' + n.toFixed(2).replace('.', ',');
@@ -5093,10 +5111,15 @@ function renderBalancete() {
     <div class="kpi-card blue"><div class="kpi-label">Lançamentos</div><div class="kpi-value">${fmtN(txs.length)}</div></div>
   `;
 
+  // Buscar nomes dos pais (para agrupar subcategorias de Custos Fixos)
   const grupos = {};
   txs.forEach(t => {
-    const key = (t.categorias?.tipo||'—') + '::' + (t.categorias?.nome||'Sem categoria');
-    if (!grupos[key]) grupos[key] = { nome: t.categorias?.nome||'Sem categoria', tipo: t.categorias?.tipo||'—', total: 0, txs: [] };
+    const cat = t.categorias || {};
+    // Se tem pai, agrupa pelo pai; senão usa a própria categoria
+    const nomeFinal = cat.categoria_pai_id ? _getNomePai(cat.categoria_pai_id) || cat.nome : cat.nome || 'Sem categoria';
+    const tipoFinal = cat.tipo || '—';
+    const key = tipoFinal + '::' + nomeFinal;
+    if (!grupos[key]) grupos[key] = { nome: nomeFinal, tipo: tipoFinal, total: 0, txs: [] };
     grupos[key].total += Math.abs(t.valor);
     grupos[key].txs.push(t);
   });
