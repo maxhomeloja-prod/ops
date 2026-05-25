@@ -4150,6 +4150,9 @@ function renderBalancete() {
       </tr>
       <tbody class="bal-detail" style="display:none">${txRows}</tbody>`;
   }).join('');
+
+  // Garantir todos os detalhes fechados após inserção no DOM
+  document.querySelectorAll('.bal-detail').forEach(d => { d.style.display = 'none'; });
 }
 
 // ─── MOBILE DETECTION ─────────────────────────────────────────────
