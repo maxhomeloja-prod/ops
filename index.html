@@ -897,6 +897,7 @@
     <button class="nav-btn" onclick="showView('registrar')">✏️ Entregas</button>
     <button class="nav-btn" id="nav-maxentregas" onclick="showView('maxentregas')" style="display:none">📦 Max Entregas</button>
     <button class="nav-btn" id="nav-pagamentos" onclick="showView('pagamentos')" style="display:none">💰 Pagamentos</button>
+    <button class="nav-btn" id="nav-lancamentos" onclick="showView('lancamentos', this)" style="display:none">📝 Lançamentos</button>
     <button class="nav-btn" id="nav-categorizacao" onclick="showView('categorizacao', this)" style="display:none">🏷️ Categorização <span id="badge-pendentes" style="display:none;background:var(--red);color:white;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px"></span></button>
     <button class="nav-btn" id="nav-balancete" onclick="showView('balancete', this)" style="display:none">📊 Balancete</button>
     <button class="nav-btn" onclick="refreshOPs()" title="Atualizar" style="padding:8px 10px">🔄</button>
@@ -1299,6 +1300,7 @@
         <option value="">Todas as empresas</option>
         <option value="06af0934-2b30-4981-ab0a-ce75725858df">Maxhome</option>
         <option value="3ea4e54f-10a9-4ece-8815-442698002499">Lume Decor</option>
+        <option value="externos">Lançamentos Externos</option>
       </select>
       <select class="dash-filter-select" id="cat-filter-tipo" onchange="loadCategorizacao()">
         <option value="">Todos os tipos</option>
@@ -1329,6 +1331,7 @@
         <option value="">Todas as empresas</option>
         <option value="06af0934-2b30-4981-ab0a-ce75725858df">Maxhome</option>
         <option value="3ea4e54f-10a9-4ece-8815-442698002499">Lume Decor</option>
+        <option value="externos">Lançamentos Externos</option>
       </select>
       <input type="month" class="dash-filter-select" id="bal-filter-mes" onchange="loadBalancete()">
       <select class="dash-filter-select" id="bal-filter-tipo" onchange="renderBalancete()">
@@ -1419,6 +1422,100 @@
       <div style="padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-outline" onclick="document.getElementById('nova-cat-overlay').style.display='none'">Cancelar</button>
         <button class="btn btn-primary" onclick="salvarNovaCategoria()">✓ Criar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- VIEW: LANÇAMENTOS EXTERNOS -->
+  <div class="view" id="view-lancamentos">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div class="pag-filters" style="margin:0">
+        <select class="dash-filter-select" id="lanc-filter-tipo" onchange="renderLancamentos()">
+          <option value="">Todos</option>
+          <option value="PAGAR">A Pagar</option>
+          <option value="RECEBER">A Receber</option>
+        </select>
+        <select class="dash-filter-select" id="lanc-filter-sit" onchange="renderLancamentos()">
+          <option value="">Todas as situações</option>
+          <option value="EM_ABERTO">Em aberto</option>
+          <option value="PAGO_RECEBIDO">Pago/Recebido</option>
+        </select>
+        <select class="dash-filter-select" id="lanc-filter-meio" onchange="renderLancamentos()">
+          <option value="">Todos os meios</option>
+          <option value="CHEQUE">Cheque</option>
+          <option value="DINHEIRO">Dinheiro</option>
+        </select>
+        <input type="date" class="dash-filter-select" id="lanc-filter-de" onchange="renderLancamentos()">
+        <input type="date" class="dash-filter-select" id="lanc-filter-ate" onchange="renderLancamentos()">
+      </div>
+      <button class="btn btn-primary" onclick="abrirModalLanc()">+ Novo Lançamento</button>
+    </div>
+
+    <div id="lanc-summary" style="margin-bottom:14px"></div>
+    <div class="loading" id="lanc-loading"><div class="spinner"></div><div>Carregando...</div></div>
+    <div id="lanc-table-wrap" style="display:none">
+      <table class="pag-table">
+        <thead><tr>
+          <th>Data</th><th>Descrição</th><th>Tipo</th><th>Meio</th><th>Valor</th><th>Categoria</th><th>Situação</th><th>Ações</th>
+        </tr></thead>
+        <tbody id="lanc-tbody"></tbody>
+      </table>
+      <div class="empty" id="lanc-empty" style="display:none">Nenhum lançamento encontrado.</div>
+    </div>
+  </div>
+
+  <!-- MODAL LANÇAMENTO EXTERNO -->
+  <div id="lanc-modal-overlay" onclick="fecharModalLanc(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:16px;width:100%;max-width:500px;margin:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-size:17px;font-weight:700;color:var(--charcoal)" id="lanc-modal-title">📝 Novo Lançamento</div>
+        <button class="modal-close" onclick="fecharModalLanc()">✕</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+        <input type="hidden" id="lanc-edit-id">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="me-field"><label>Data</label><input type="date" id="lanc-edit-data"></div>
+          <div class="me-field"><label>Valor (R$)</label><input type="number" id="lanc-edit-valor" step="0.01" min="0" placeholder="0,00"></div>
+        </div>
+        <div class="me-field"><label>Descrição</label><input type="text" id="lanc-edit-desc" placeholder="Descrição do lançamento..."></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="me-field">
+            <label>Tipo</label>
+            <select id="lanc-edit-tipo" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+              <option value="PAGAR">A Pagar</option>
+              <option value="RECEBER">A Receber</option>
+            </select>
+          </div>
+          <div class="me-field">
+            <label>Meio</label>
+            <select id="lanc-edit-meio" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+              <option value="CHEQUE">Cheque</option>
+              <option value="DINHEIRO">Dinheiro</option>
+            </select>
+          </div>
+        </div>
+        <div class="me-field">
+          <label>Categoria</label>
+          <select id="lanc-edit-categoria" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="me-field">
+          <label>Situação</label>
+          <select id="lanc-edit-sit" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+            <option value="EM_ABERTO">Em aberto</option>
+            <option value="PAGO_RECEBIDO">Pago / Recebido</option>
+          </select>
+        </div>
+        <div class="me-field"><label>Observação (opcional)</label><input type="text" id="lanc-edit-obs" placeholder="Observação..."></div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:space-between">
+        <button class="btn-danger-outline" id="lanc-btn-excluir" style="display:none" onclick="excluirLancamento()">🗑 Excluir</button>
+        <div style="display:flex;gap:10px;margin-left:auto">
+          <button class="btn btn-outline" onclick="fecharModalLanc()">Cancelar</button>
+          <button class="btn btn-primary" onclick="salvarLancamento()">✓ Salvar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2137,6 +2234,7 @@ function showView(v, btn) {
   if (v === 'ops') { renderOPs(); }
   if (v === 'maxops') renderMaxOps();
   if (v === 'maxentregas') loadMaxEntregas();
+  if (v === 'lancamentos') loadLancamentos();
   if (v === 'categorizacao') loadCategorizacao();
   if (v === 'balancete') loadBalancete();
   if (v === 'registrar') {
@@ -2664,6 +2762,8 @@ async function appLogin() {
   if (navCMO) navCMO.style.display = (nome === 'PRODUCAO INTERNA') ? 'none' : '';
   const navMaxEnt = document.getElementById('nav-maxentregas');
   if (navMaxEnt) navMaxEnt.style.display = isMaster ? '' : 'none';
+  const navLanc = document.getElementById('nav-lancamentos');
+  if (navLanc) navLanc.style.display = isMaster ? '' : 'none';
   const navCat = document.getElementById('nav-categorizacao');
   if (navCat) navCat.style.display = isMaster ? '' : 'none';
   const navBal = document.getElementById('nav-balancete');
@@ -3871,6 +3971,210 @@ async function finPatch(path, body) {
   return res.ok;
 }
 
+
+// ─── LANÇAMENTOS EXTERNOS ─────────────────────────────────────────
+let _lancamentos = [];
+
+async function loadLancamentos() {
+  document.getElementById('lanc-loading').style.display = 'block';
+  document.getElementById('lanc-table-wrap').style.display = 'none';
+  const data = await finGet('lancamentos_externos?select=*,categorias(nome,tipo)&order=data.desc&limit=500');
+  _lancamentos = Array.isArray(data) ? data : [];
+  document.getElementById('lanc-loading').style.display = 'none';
+  document.getElementById('lanc-table-wrap').style.display = 'block';
+  if (_categorias.length === 0) {
+    const cats = await finGet('categorias?select=*&ativa=eq.true&order=tipo,nome');
+    _categorias = Array.isArray(cats) ? cats : [];
+  }
+  renderLancamentos();
+}
+
+function renderLancamentos() {
+  const tipo  = document.getElementById('lanc-filter-tipo').value;
+  const sit   = document.getElementById('lanc-filter-sit').value;
+  const meio  = document.getElementById('lanc-filter-meio').value;
+  const de    = document.getElementById('lanc-filter-de').value;
+  const ate   = document.getElementById('lanc-filter-ate').value;
+  const fmt   = n => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
+
+  let rows = _lancamentos.filter(l => {
+    if (tipo && l.tipo_lancamento !== tipo) return false;
+    if (sit  && l.situacao !== sit) return false;
+    if (meio && l.meio_pagamento !== meio) return false;
+    if (de   && l.data < de) return false;
+    if (ate  && l.data > ate) return false;
+    return true;
+  });
+
+  const totalPagar    = rows.filter(l=>l.tipo_lancamento==='PAGAR'  ).reduce((s,l)=>s+Number(l.valor),0);
+  const totalReceber  = rows.filter(l=>l.tipo_lancamento==='RECEBER').reduce((s,l)=>s+Number(l.valor),0);
+  const totalAberto   = rows.filter(l=>l.situacao==='EM_ABERTO'     ).reduce((s,l)=>s+Number(l.valor),0);
+
+  document.getElementById('lanc-summary').innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div class="pag-summary-card" style="border-top:3px solid var(--red)">
+        <div class="pag-summary-label">A Pagar</div>
+        <div class="pag-summary-val" style="color:var(--red)">${fmt(totalPagar)}</div>
+      </div>
+      <div class="pag-summary-card" style="border-top:3px solid var(--green)">
+        <div class="pag-summary-label">A Receber</div>
+        <div class="pag-summary-val" style="color:var(--green)">${fmt(totalReceber)}</div>
+      </div>
+      <div class="pag-summary-card" style="border-top:3px solid var(--orange)">
+        <div class="pag-summary-label">Em Aberto</div>
+        <div class="pag-summary-val" style="color:var(--orange)">${fmt(totalAberto)}</div>
+      </div>
+      <div class="pag-summary-card" style="border-top:3px solid var(--blue)">
+        <div class="pag-summary-label">Registros</div>
+        <div class="pag-summary-val">${rows.length}</div>
+      </div>
+    </div>`;
+
+  if (!rows.length) {
+    document.getElementById('lanc-tbody').innerHTML = '';
+    document.getElementById('lanc-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('lanc-empty').style.display = 'none';
+
+  const fmtD = d => d ? d.substring(0,10).split('-').reverse().join('/') : '—';
+  document.getElementById('lanc-tbody').innerHTML = rows.map(l => {
+    const corTipo = l.tipo_lancamento === 'RECEBER' ? 'var(--green)' : 'var(--red)';
+    const badgeTipo = l.tipo_lancamento === 'RECEBER' ? 'lancado' : 'aberto';
+    const badgeSit  = l.situacao === 'PAGO_RECEBIDO' ? 'lancado' : 'aberto';
+    const sitLabel  = l.situacao === 'PAGO_RECEBIDO' ? '✓ Pago/Recebido' : '● Em aberto';
+    const tipLabel  = l.tipo_lancamento === 'RECEBER' ? 'A Receber' : 'A Pagar';
+    return `<tr style="cursor:pointer" onclick="editarLancamento('${l.id}')">
+      <td style="white-space:nowrap">${fmtD(l.data)}</td>
+      <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.descricao}</td>
+      <td><span class="pag-badge ${badgeTipo}">${tipLabel}</span></td>
+      <td style="font-size:12px;color:var(--gray)">${l.meio_pagamento}</td>
+      <td style="font-weight:700;color:${corTipo}">${fmt(l.valor)}</td>
+      <td style="font-size:12px;color:var(--gray)">${l.categorias?.nome||'—'}</td>
+      <td><span class="pag-badge ${badgeSit}">${sitLabel}</span></td>
+      <td>
+        <button class="btn-pag ${l.situacao==='EM_ABERTO'?'btn-marcar-lancado':'btn-marcar-aberto'}"
+          onclick="event.stopPropagation();toggleLancSituacao('${l.id}','${l.situacao}')">
+          ${l.situacao==='EM_ABERTO'?'✓ Quitar':'↩ Reabrir'}
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function abrirModalLanc() {
+  document.getElementById('lanc-edit-id').value = '';
+  document.getElementById('lanc-edit-data').value = new Date().toISOString().split('T')[0];
+  document.getElementById('lanc-edit-desc').value = '';
+  document.getElementById('lanc-edit-valor').value = '';
+  document.getElementById('lanc-edit-tipo').value = 'PAGAR';
+  document.getElementById('lanc-edit-meio').value = 'CHEQUE';
+  document.getElementById('lanc-edit-sit').value = 'EM_ABERTO';
+  document.getElementById('lanc-edit-obs').value = '';
+  document.getElementById('lanc-btn-excluir').style.display = 'none';
+  document.getElementById('lanc-modal-title').textContent = '📝 Novo Lançamento';
+  _popularSelectLanc();
+  document.getElementById('lanc-modal-overlay').style.display = 'flex';
+}
+
+function editarLancamento(id) {
+  const l = _lancamentos.find(x => x.id === id);
+  if (!l) return;
+  document.getElementById('lanc-edit-id').value = l.id;
+  document.getElementById('lanc-edit-data').value = l.data;
+  document.getElementById('lanc-edit-desc').value = l.descricao;
+  document.getElementById('lanc-edit-valor').value = l.valor;
+  document.getElementById('lanc-edit-tipo').value = l.tipo_lancamento;
+  document.getElementById('lanc-edit-meio').value = l.meio_pagamento;
+  document.getElementById('lanc-edit-sit').value = l.situacao;
+  document.getElementById('lanc-edit-obs').value = l.observacao || '';
+  document.getElementById('lanc-btn-excluir').style.display = 'inline-flex';
+  document.getElementById('lanc-modal-title').textContent = '✏️ Editar Lançamento';
+  _popularSelectLanc(l.categoria_id);
+  document.getElementById('lanc-modal-overlay').style.display = 'flex';
+}
+
+function _popularSelectLanc(selectedId) {
+  const sel = document.getElementById('lanc-edit-categoria');
+  sel.innerHTML = '<option value="">Sem categoria</option>';
+  const grupos = { DESPESA: [], RECEITA: [] };
+  _categorias.forEach(c => { if (grupos[c.tipo]) grupos[c.tipo].push(c); });
+  ['DESPESA','RECEITA'].forEach(tipo => {
+    if (!grupos[tipo].length) return;
+    const og = document.createElement('optgroup');
+    og.label = tipo;
+    grupos[tipo].forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat.id;
+      opt.textContent = cat.nome;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+  if (selectedId) sel.value = selectedId;
+}
+
+function fecharModalLanc(e) {
+  if (e && e.target !== document.getElementById('lanc-modal-overlay')) return;
+  document.getElementById('lanc-modal-overlay').style.display = 'none';
+}
+
+async function salvarLancamento() {
+  const id     = document.getElementById('lanc-edit-id').value;
+  const data   = document.getElementById('lanc-edit-data').value;
+  const desc   = document.getElementById('lanc-edit-desc').value.trim();
+  const valor  = parseFloat(document.getElementById('lanc-edit-valor').value);
+  const tipo   = document.getElementById('lanc-edit-tipo').value;
+  const meio   = document.getElementById('lanc-edit-meio').value;
+  const sit    = document.getElementById('lanc-edit-sit').value;
+  const catId  = document.getElementById('lanc-edit-categoria').value || null;
+  const obs    = document.getElementById('lanc-edit-obs').value || null;
+
+  if (!data || !desc || !valor || valor <= 0) { toast('Preencha data, descrição e valor.', 'error'); return; }
+
+  const body = { data, descricao: desc, valor, tipo_lancamento: tipo, meio_pagamento: meio, situacao: sit, categoria_id: catId, observacao: obs, atualizado_em: new Date().toISOString() };
+
+  let ok;
+  if (id) {
+    ok = await finPatch('lancamentos_externos?id=eq.' + id, body);
+  } else {
+    const res = await fetch(FIN_URL + '/lancamentos_externos', {
+      method: 'POST',
+      headers: { 'apikey': FIN_KEY, 'Authorization': 'Bearer ' + FIN_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(body)
+    });
+    ok = res.ok;
+  }
+
+  if (ok) {
+    document.getElementById('lanc-modal-overlay').style.display = 'none';
+    toast('✓ Lançamento salvo!', 'success');
+    loadLancamentos();
+  } else {
+    toast('Erro ao salvar.', 'error');
+  }
+}
+
+async function excluirLancamento() {
+  const id = document.getElementById('lanc-edit-id').value;
+  if (!id || !confirm('Excluir este lançamento permanentemente?')) return;
+  const res = await fetch(FIN_URL + '/lancamentos_externos?id=eq.' + id, {
+    method: 'DELETE',
+    headers: { 'apikey': FIN_KEY, 'Authorization': 'Bearer ' + FIN_KEY }
+  });
+  if (res.ok) {
+    document.getElementById('lanc-modal-overlay').style.display = 'none';
+    toast('Lançamento excluído.', 'success');
+    loadLancamentos();
+  }
+}
+
+async function toggleLancSituacao(id, sitAtual) {
+  const novaSit = sitAtual === 'EM_ABERTO' ? 'PAGO_RECEBIDO' : 'EM_ABERTO';
+  const ok = await finPatch('lancamentos_externos?id=eq.' + id, { situacao: novaSit, atualizado_em: new Date().toISOString() });
+  if (ok) { toast('✓ Situação atualizada!', 'success'); loadLancamentos(); }
+}
+
 // ─── CATEGORIZAÇÃO ────────────────────────────────────────────────
 let _catTransacoes = [];
 let _categorias = [];
@@ -4052,17 +4356,31 @@ async function loadBalancete() {
   const empresa = document.getElementById('bal-filter-empresa').value;
   const mes     = document.getElementById('bal-filter-mes').value;
 
-  let q = 'transacoes?select=*,categorias(nome,tipo,cor)&status=eq.CONFIRMADA&order=data.desc&limit=1000';
-  if (empresa) q += `&empresa_id=eq.${empresa}`;
+  let ini = '', fim = '';
   if (mes) {
     const [ano, m] = mes.split('-');
-    const ini = `${ano}-${m}-01`;
-    const fim = `${ano}-${m}-${new Date(ano, m, 0).getDate()}`;
-    q += `&data=gte.${ini}&data=lte.${fim}`;
+    ini = `${ano}-${m}-01`;
+    fim = `${ano}-${m}-${new Date(ano, m, 0).getDate()}`;
   }
 
-  const data = await finGet(q);
-  _balTransacoes = Array.isArray(data) ? data : [];
+  if (empresa === 'externos') {
+    // Carregar lançamentos externos como transações
+    let q = 'lancamentos_externos?select=*,categorias(nome,tipo)&situacao=eq.PAGO_RECEBIDO&order=data.desc&limit=1000';
+    if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
+    const data = await finGet(q);
+    // Converter para formato compatível com renderBalancete
+    _balTransacoes = (Array.isArray(data) ? data : []).map(l => ({
+      ...l,
+      tipo: l.tipo_lancamento === 'RECEBER' ? 'CREDIT' : 'DEBIT',
+      status: 'CONFIRMADA'
+    }));
+  } else {
+    let q = 'transacoes?select=*,categorias(nome,tipo,cor)&status=eq.CONFIRMADA&order=data.desc&limit=1000';
+    if (empresa) q += `&empresa_id=eq.${empresa}`;
+    if (ini) q += `&data=gte.${ini}&data=lte.${fim}`;
+    const data = await finGet(q);
+    _balTransacoes = Array.isArray(data) ? data : [];
+  }
 
   document.getElementById('bal-loading').style.display = 'none';
   document.getElementById('bal-content').style.display = 'block';
