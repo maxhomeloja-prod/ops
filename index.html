@@ -1442,9 +1442,9 @@
           <option value="RECEBER">A Receber</option>
         </select>
         <select class="dash-filter-select" id="lanc-filter-sit" onchange="renderLancamentos()">
-          <option value="">Todas as situações</option>
           <option value="EM_ABERTO">Em aberto</option>
           <option value="PAGO_RECEBIDO">Pago/Recebido</option>
+          <option value="">Todos</option>
         </select>
         <select class="dash-filter-select" id="lanc-filter-meio" onchange="renderLancamentos()">
           <option value="">Todos os meios</option>
@@ -1462,7 +1462,7 @@
     <div id="lanc-table-wrap" style="display:none">
       <table class="pag-table">
         <thead><tr>
-          <th>Data</th><th>Descrição</th><th>Tipo</th><th>Meio</th><th>Valor</th><th>Categoria</th><th>Situação</th><th>Ações</th>
+          <th>Emissão</th><th>Vencimento</th><th>Cliente/Fornecedor</th><th>Descrição</th><th>Tipo</th><th>Meio</th><th>Valor</th><th>Categoria</th><th>Situação</th><th>Ações</th>
         </tr></thead>
         <tbody id="lanc-tbody"></tbody>
       </table>
@@ -1480,14 +1480,9 @@
       <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px">
         <input type="hidden" id="lanc-edit-id">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="me-field"><label>Data</label><input type="date" id="lanc-edit-data"></div>
-          <div class="me-field"><label>Valor (R$)</label><input type="number" id="lanc-edit-valor" step="0.01" min="0" placeholder="0,00"></div>
-        </div>
-        <div class="me-field"><label>Descrição</label><input type="text" id="lanc-edit-desc" placeholder="Descrição do lançamento..."></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="me-field">
             <label>Tipo</label>
-            <select id="lanc-edit-tipo" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+            <select id="lanc-edit-tipo" onchange="toggleLancClienteForn()" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
               <option value="PAGAR">A Pagar</option>
               <option value="RECEBER">A Receber</option>
             </select>
@@ -1500,11 +1495,23 @@
             </select>
           </div>
         </div>
-        <div class="me-field">
-          <label>Categoria</label>
-          <select id="lanc-edit-categoria" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
-            <option value="">Selecione...</option>
-          </select>
+        <div class="me-field" id="lanc-cliente-wrap">
+          <label id="lanc-label-cf">Fornecedor</label>
+          <input type="text" id="lanc-edit-cf" placeholder="Nome...">
+        </div>
+        <div class="me-field"><label>Descrição</label><input type="text" id="lanc-edit-desc" placeholder="Descrição do lançamento..."></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="me-field"><label>Data de Emissão</label><input type="date" id="lanc-edit-data"></div>
+          <div class="me-field"><label>Data de Vencimento</label><input type="date" id="lanc-edit-venc"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="me-field"><label>Valor (R$)</label><input type="number" id="lanc-edit-valor" step="0.01" min="0" placeholder="0,00"></div>
+          <div class="me-field">
+            <label>Categoria</label>
+            <select id="lanc-edit-categoria" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+              <option value="">Selecione...</option>
+            </select>
+          </div>
         </div>
         <div class="me-field">
           <label>Situação</label>
@@ -4614,9 +4621,11 @@ function renderLancamentos() {
   const ate   = document.getElementById('lanc-filter-ate').value;
   const fmt   = n => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
 
+  // Por padrão ocultar baixados (EM_ABERTO se nenhuma situação selecionada)
+  const sitEff = sit || 'EM_ABERTO';
   let rows = _lancamentos.filter(l => {
     if (tipo && l.tipo_lancamento !== tipo) return false;
-    if (sit  && l.situacao !== sit) return false;
+    if (sitEff && l.situacao !== sitEff) return false;
     if (meio && l.meio_pagamento !== meio) return false;
     if (de   && l.data < de) return false;
     if (ate  && l.data > ate) return false;
@@ -4661,9 +4670,15 @@ function renderLancamentos() {
     const badgeSit  = l.situacao === 'PAGO_RECEBIDO' ? 'lancado' : 'aberto';
     const sitLabel  = l.situacao === 'PAGO_RECEBIDO' ? '✓ Pago/Recebido' : '● Em aberto';
     const tipLabel  = l.tipo_lancamento === 'RECEBER' ? 'A Receber' : 'A Pagar';
+    const cf = l.tipo_lancamento === 'RECEBER' ? (l.cliente||'—') : (l.fornecedor||'—');
+    const vencStr = fmtD(l.data_vencimento);
+    const hoje = new Date().toISOString().split('T')[0];
+    const vencido = l.data_vencimento && l.data_vencimento < hoje && l.situacao === 'EM_ABERTO';
     return `<tr style="cursor:pointer" onclick="editarLancamento('${l.id}')">
-      <td style="white-space:nowrap">${fmtD(l.data)}</td>
-      <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.descricao}</td>
+      <td style="white-space:nowrap;font-size:12px">${fmtD(l.data)}</td>
+      <td style="white-space:nowrap;font-weight:600;color:${vencido?'var(--red)':'inherit'}">${vencStr}${vencido?' ⚠️':''}</td>
+      <td style="font-size:12px">${cf}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.descricao}</td>
       <td><span class="pag-badge ${badgeTipo}">${tipLabel}</span></td>
       <td style="font-size:12px;color:var(--gray)">${l.meio_pagamento}</td>
       <td style="font-weight:700;color:${corTipo}">${fmt(l.valor)}</td>
@@ -4679,17 +4694,29 @@ function renderLancamentos() {
   }).join('');
 }
 
+
+function toggleLancClienteForn() {
+  const tipo = document.getElementById('lanc-edit-tipo').value;
+  const label = document.getElementById('lanc-label-cf');
+  const input = document.getElementById('lanc-edit-cf');
+  if (label) label.textContent = tipo === 'RECEBER' ? 'Cliente' : 'Fornecedor';
+  if (input) input.placeholder = tipo === 'RECEBER' ? 'Nome do cliente...' : 'Nome do fornecedor...';
+}
+
 function abrirModalLanc() {
   document.getElementById('lanc-edit-id').value = '';
   document.getElementById('lanc-edit-data').value = new Date().toISOString().split('T')[0];
+  document.getElementById('lanc-edit-venc').value = '';
   document.getElementById('lanc-edit-desc').value = '';
   document.getElementById('lanc-edit-valor').value = '';
   document.getElementById('lanc-edit-tipo').value = 'PAGAR';
   document.getElementById('lanc-edit-meio').value = 'CHEQUE';
   document.getElementById('lanc-edit-sit').value = 'EM_ABERTO';
   document.getElementById('lanc-edit-obs').value = '';
+  document.getElementById('lanc-edit-cf').value = '';
   document.getElementById('lanc-btn-excluir').style.display = 'none';
   document.getElementById('lanc-modal-title').textContent = '📝 Novo Lançamento';
+  toggleLancClienteForn();
   _popularSelectLanc();
   document.getElementById('lanc-modal-overlay').style.display = 'flex';
 }
@@ -4699,14 +4726,17 @@ function editarLancamento(id) {
   if (!l) return;
   document.getElementById('lanc-edit-id').value = l.id;
   document.getElementById('lanc-edit-data').value = l.data;
+  document.getElementById('lanc-edit-venc').value = l.data_vencimento || '';
   document.getElementById('lanc-edit-desc').value = l.descricao;
   document.getElementById('lanc-edit-valor').value = l.valor;
   document.getElementById('lanc-edit-tipo').value = l.tipo_lancamento;
   document.getElementById('lanc-edit-meio').value = l.meio_pagamento;
   document.getElementById('lanc-edit-sit').value = l.situacao;
   document.getElementById('lanc-edit-obs').value = l.observacao || '';
+  document.getElementById('lanc-edit-cf').value = l.tipo_lancamento === 'RECEBER' ? (l.cliente||'') : (l.fornecedor||'');
   document.getElementById('lanc-btn-excluir').style.display = 'inline-flex';
   document.getElementById('lanc-modal-title').textContent = '✏️ Editar Lançamento';
+  toggleLancClienteForn();
   _popularSelectLanc(l.categoria_id);
   document.getElementById('lanc-modal-overlay').style.display = 'flex';
 }
@@ -4749,7 +4779,11 @@ async function salvarLancamento() {
 
   if (!data || !desc || !valor || valor <= 0) { toast('Preencha data, descrição e valor.', 'error'); return; }
 
-  const body = { data, descricao: desc, valor, tipo_lancamento: tipo, meio_pagamento: meio, situacao: sit, categoria_id: catId, observacao: obs, atualizado_em: new Date().toISOString() };
+  const cf     = document.getElementById('lanc-edit-cf').value.trim() || null;
+  const venc   = document.getElementById('lanc-edit-venc').value || null;
+  const cliente    = tipo === 'RECEBER' ? cf : null;
+  const fornecedor = tipo === 'PAGAR'   ? cf : null;
+  const body = { data, data_vencimento: venc, descricao: desc, valor, tipo_lancamento: tipo, meio_pagamento: meio, situacao: sit, categoria_id: catId, observacao: obs, cliente, fornecedor, atualizado_em: new Date().toISOString() };
 
   let ok;
   if (id) {
