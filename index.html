@@ -1372,10 +1372,45 @@
           </select>
         </div>
         <div class="me-field"><label>Observação (opcional)</label><input type="text" id="cat-edit-obs" placeholder="Observação..."></div>
+        <div style="text-align:right">
+          <button class="btn btn-outline" style="font-size:12px;padding:6px 12px" onclick="abrirNovaCategoriaModal()">+ Nova categoria</button>
+        </div>
       </div>
       <div style="padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-outline" onclick="fecharCatModal()">Cancelar</button>
         <button class="btn btn-primary" onclick="confirmarCategorizacao()">✓ Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL NOVA CATEGORIA -->
+  <div id="nova-cat-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:14px;width:100%;max-width:380px;margin:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 22px 14px;border-bottom:1px solid var(--border)">
+        <div style="font-size:16px;font-weight:700;color:var(--charcoal)">+ Nova Categoria</div>
+        <button class="modal-close" onclick="document.getElementById('nova-cat-overlay').style.display='none'">✕</button>
+      </div>
+      <div style="padding:18px 22px;display:flex;flex-direction:column;gap:12px">
+        <div class="me-field">
+          <label>Nome</label>
+          <input type="text" id="nova-cat-nome" placeholder="Ex: Fornecedores de tecido">
+        </div>
+        <div class="me-field">
+          <label>Tipo</label>
+          <select id="nova-cat-tipo" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+            <option value="DESPESA">DESPESA</option>
+            <option value="RECEITA">RECEITA</option>
+          </select>
+        </div>
+        <div class="me-field">
+          <label>Cor</label>
+          <input type="color" id="nova-cat-cor" value="#4a8a7e" style="width:100%;height:40px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer">
+        </div>
+      </div>
+      <div style="padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="document.getElementById('nova-cat-overlay').style.display='none'">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarNovaCategoria()">✓ Criar</button>
       </div>
     </div>
   </div>
@@ -3897,6 +3932,41 @@ async function loadCategorizacao() {
   }).join('');
 }
 
+
+function abrirNovaCategoriaModal() {
+  document.getElementById('nova-cat-nome').value = '';
+  document.getElementById('nova-cat-overlay').style.display = 'flex';
+}
+
+async function salvarNovaCategoria() {
+  const nome = document.getElementById('nova-cat-nome').value.trim();
+  const tipo = document.getElementById('nova-cat-tipo').value;
+  const cor  = document.getElementById('nova-cat-cor').value;
+  if (!nome) { toast('Informe o nome da categoria.', 'error'); return; }
+
+  const res = await fetch(`${FIN_URL}/categorias`, {
+    method: 'POST',
+    headers: { 'apikey': FIN_KEY, 'Authorization': `Bearer ${FIN_KEY}`,
+      'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+    body: JSON.stringify({ nome, tipo, cor, ativa: true })
+  });
+  if (res.ok) {
+    const nova = await res.json();
+    _categorias = []; // forçar reload
+    document.getElementById('nova-cat-overlay').style.display = 'none';
+    toast(`✓ Categoria "${nome}" criada!`, 'success');
+    // Recarregar categorias e reabrir modal de categorização se estiver aberto
+    const catOverlay = document.getElementById('cat-modal-overlay');
+    if (catOverlay.style.display === 'flex') {
+      const id = document.getElementById('cat-edit-id').value;
+      await loadCategorizacao();
+      abrirCatModal(id);
+    }
+  } else {
+    toast('Erro ao criar categoria.', 'error');
+  }
+}
+
 function abrirCatModal(id) {
   const t = _catTransacoes.find(x => x.id === id);
   if (!t) return;
@@ -3988,6 +4058,16 @@ async function loadBalancete() {
   renderBalancete();
 }
 
+
+function toggleBalRow(tr) {
+  const detail = tr.nextElementSibling;
+  if (!detail) return;
+  const isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : 'table-row-group';
+  const arrow = tr.querySelector('span');
+  if (arrow) arrow.textContent = isOpen ? '▶' : '▼';
+}
+
 function renderBalancete() {
   const filtroTipo = document.getElementById('bal-filter-tipo').value;
   const fmt = n => 'R$ ' + n.toFixed(2).replace('.', ',');
@@ -4021,21 +4101,27 @@ function renderBalancete() {
     grupos[key].txs.push(t);
   });
 
-  const totalGeral = txs.reduce((s, t) => s + Math.abs(t.valor), 0) || 1;
-  const linhas = Object.values(grupos).sort((a, b) => b.total - a.total);
+  // Calcular totais separados por tipo para percentual correto
+  const totalReceitas2 = Object.values(grupos).filter(g => g.tipo==='RECEITA').reduce((s,g) => s+g.total, 0) || 1;
+  const totalDespesas2 = Object.values(grupos).filter(g => g.tipo==='DESPESA').reduce((s,g) => s+g.total, 0) || 1;
+  const linhas = Object.values(grupos).sort((a, b) => {
+    if (a.tipo !== b.tipo) return a.tipo === 'DESPESA' ? -1 : 1;
+    return b.total - a.total;
+  });
 
   document.getElementById('bal-tbody').innerHTML = linhas.map((g, i) => {
-    const pct = (g.total / totalGeral * 100).toFixed(1);
+    const totalRef = g.tipo === 'RECEITA' ? totalReceitas2 : totalDespesas2;
+    const pct = (g.total / totalRef * 100).toFixed(1);
     const corTipo = g.tipo === 'RECEITA' ? 'var(--green)' : 'var(--red)';
     const txRows = g.txs.map(t => `
       <tr style="background:#f9fafb">
         <td colspan="2" style="padding:6px 12px 6px 32px;font-size:12px;color:var(--gray)">${t.data?.substring(0,10).split('-').reverse().join('/')} — ${t.descricao || '—'}</td>
-        <td style="font-size:12px;font-weight:600;color:${t.tipo==='CREDIT'?'var(--green)':'var(--red)'}">${t.tipo==='CREDIT'?'+':'-'}${fmt(Math.abs(t.valor))}</td>
+        <td style="font-size:12px;font-weight:600;color:${corTipo}">${fmt(Math.abs(t.valor))}</td>
         <td></td><td></td>
       </tr>`).join('');
     return `
-      <tr style="cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'table-row-group':'none'">
-        <td style="font-weight:600">${g.nome}</td>
+      <tr style="cursor:pointer" onclick="toggleBalRow(this)" title="Clique para expandir">
+        <td style="font-weight:600">${g.nome} <span style="font-size:11px;color:var(--gray)">▶</span></td>
         <td><span class="pag-badge ${g.tipo==='RECEITA'?'lancado':'aberto'}">${g.tipo}</span></td>
         <td style="font-weight:700;color:${corTipo}">${fmt(g.total)}</td>
         <td style="color:var(--gray)">${g.txs.length}</td>
@@ -4048,7 +4134,7 @@ function renderBalancete() {
           </div>
         </td>
       </tr>
-      <tbody style="display:none">${txRows}</tbody>`;
+      <tbody class="bal-detail" style="display:none">${txRows}</tbody>`;
   }).join('');
 }
 
