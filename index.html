@@ -1446,10 +1446,8 @@
           <option value="PAGO_RECEBIDO">Pago/Recebido</option>
           <option value="">Todos</option>
         </select>
-        <select class="dash-filter-select" id="lanc-filter-meio" onchange="renderLancamentos()">
-          <option value="">Todos os meios</option>
-          <option value="CHEQUE">Cheque</option>
-          <option value="DINHEIRO">Dinheiro</option>
+        <select class="dash-filter-select" id="lanc-filter-cat" onchange="renderLancamentos()">
+          <option value="">Todas as categorias</option>
         </select>
         <input type="date" class="dash-filter-select" id="lanc-filter-de" onchange="renderLancamentos()">
         <input type="date" class="dash-filter-select" id="lanc-filter-ate" onchange="renderLancamentos()">
@@ -1462,7 +1460,7 @@
     <div id="lanc-table-wrap" style="display:none">
       <table class="pag-table">
         <thead><tr>
-          <th>Emissão</th><th>Vencimento</th><th>Cliente/Fornecedor</th><th>Descrição</th><th>Tipo</th><th>Meio</th><th>Valor</th><th>Categoria</th><th>Situação</th><th>Ações</th>
+          <th>Emissão</th><th>Vencimento</th><th>Cliente/Fornecedor</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Categoria</th><th>Situação</th><th>Ações</th>
         </tr></thead>
         <tbody id="lanc-tbody"></tbody>
       </table>
@@ -4165,7 +4163,7 @@ let _caixaTab      = 'entradas';
 
 async function loadCaixa() {
   if (_categorias.length === 0) {
-    const cats = await finGet('categorias?select=*&ativa=eq.true&order=tipo,nome');
+    const cats = await finGet('categorias?select=*,categoria_pai_id&ativa=eq.true&order=tipo,nome');
     _categorias = Array.isArray(cats) ? cats : [];
   }
   const [ents, sais, movs] = await Promise.all([
@@ -4609,8 +4607,15 @@ async function loadLancamentos() {
   document.getElementById('lanc-loading').style.display = 'none';
   document.getElementById('lanc-table-wrap').style.display = 'block';
   if (_categorias.length === 0) {
-    const cats = await finGet('categorias?select=*&ativa=eq.true&order=tipo,nome');
+    const cats = await finGet('categorias?select=*,categoria_pai_id&ativa=eq.true&order=tipo,nome');
     _categorias = Array.isArray(cats) ? cats : [];
+  }
+  // Popular filtro de categoria
+  const selCat = document.getElementById('lanc-filter-cat');
+  if (selCat) {
+    const catsLeaf = _categorias.filter(cat => !_categorias.some(c => c.categoria_pai_id === cat.id));
+    selCat.innerHTML = '<option value="">Todas as categorias</option>' +
+      catsLeaf.map(cat => `<option value="${cat.id}">${cat.nome}</option>`).join('');
   }
   renderLancamentos();
 }
@@ -4618,19 +4623,18 @@ async function loadLancamentos() {
 function renderLancamentos() {
   const tipo  = document.getElementById('lanc-filter-tipo').value;
   const sit   = document.getElementById('lanc-filter-sit').value;
-  const meio  = document.getElementById('lanc-filter-meio').value;
+  const catF  = document.getElementById('lanc-filter-cat')?.value || '';
   const de    = document.getElementById('lanc-filter-de').value;
   const ate   = document.getElementById('lanc-filter-ate').value;
   const fmt   = n => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
 
-  // Por padrão ocultar baixados (EM_ABERTO se nenhuma situação selecionada)
   const sitEff = sit || 'EM_ABERTO';
   let rows = _lancamentos.filter(l => {
     if (tipo && l.tipo_lancamento !== tipo) return false;
     if (sitEff && l.situacao !== sitEff) return false;
-    if (meio && l.meio_pagamento !== meio) return false;
-    if (de   && l.data < de) return false;
-    if (ate  && l.data > ate) return false;
+    if (catF  && l.categoria_id !== catF) return false;
+    if (de    && l.data < de) return false;
+    if (ate   && l.data > ate) return false;
     return true;
   });
 
@@ -4638,8 +4642,32 @@ function renderLancamentos() {
   const totalReceber  = rows.filter(l=>l.tipo_lancamento==='RECEBER').reduce((s,l)=>s+Number(l.valor),0);
   const totalAberto   = rows.filter(l=>l.situacao==='EM_ABERTO'     ).reduce((s,l)=>s+Number(l.valor),0);
 
+  // Cards por categoria
+  const porCat = {};
+  rows.forEach(l => {
+    const nomecat = l.categorias?.nome || 'Sem categoria';
+    const catPaiId = l.categorias?.categoria_pai_id;
+    // Agrupar subcategorias Custos Fixos no pai
+    let nomeAgrup = nomecat;
+    if (catPaiId) {
+      const pai = _categorias.find(c => c.id === catPaiId);
+      if (pai) nomeAgrup = pai.nome;
+    }
+    if (!porCat[nomeAgrup]) porCat[nomeAgrup] = { total: 0, tipo: l.categorias?.tipo || '' };
+    porCat[nomeAgrup].total += Number(l.valor);
+  });
+  const cardsCat = Object.entries(porCat)
+    .sort((a,b) => b[1].total - a[1].total)
+    .map(([nome, d]) => {
+      const cor = d.tipo === 'RECEITA' ? 'var(--green)' : 'var(--red)';
+      return `<div class="pag-summary-card" style="border-top:3px solid ${cor}">
+        <div class="pag-summary-label" style="font-size:10px">${nome}</div>
+        <div class="pag-summary-val" style="font-size:15px;color:${cor}">${fmt(d.total)}</div>
+      </div>`;
+    }).join('');
+
   document.getElementById('lanc-summary').innerHTML = `
-    <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
       <div class="pag-summary-card" style="border-top:3px solid var(--red)">
         <div class="pag-summary-label">A Pagar</div>
         <div class="pag-summary-val" style="color:var(--red)">${fmt(totalPagar)}</div>
@@ -4656,7 +4684,8 @@ function renderLancamentos() {
         <div class="pag-summary-label">Registros</div>
         <div class="pag-summary-val">${rows.length}</div>
       </div>
-    </div>`;
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">${cardsCat}</div>`;
 
   if (!rows.length) {
     document.getElementById('lanc-tbody').innerHTML = '';
@@ -4682,7 +4711,6 @@ function renderLancamentos() {
       <td style="font-size:12px">${cf}</td>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.descricao}</td>
       <td><span class="pag-badge ${badgeTipo}">${tipLabel}</span></td>
-      <td style="font-size:12px;color:var(--gray)">${l.meio_pagamento}</td>
       <td style="font-weight:700;color:${corTipo}">${fmt(l.valor)}</td>
       <td style="font-size:12px;color:var(--gray)">${l.categorias?.nome||'—'}</td>
       <td><span class="pag-badge ${badgeSit}">${sitLabel}</span></td>
@@ -4849,7 +4877,7 @@ async function loadCategorizacao() {
 
   const [transacoes, cats] = await Promise.all([
     finGet(q),
-    _categorias.length ? Promise.resolve(_categorias) : finGet('categorias?select=*&ativa=eq.true&order=tipo,nome')
+    _categorias.length ? Promise.resolve(_categorias) : finGet('categorias?select=*,categoria_pai_id&ativa=eq.true&order=tipo,nome')
   ]);
 
   _catTransacoes = Array.isArray(transacoes) ? transacoes : [];
