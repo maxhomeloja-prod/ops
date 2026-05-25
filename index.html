@@ -3980,15 +3980,18 @@ function abrirCatModal(id) {
   document.getElementById('cat-edit-valor').value = fmt(t.valor);
   document.getElementById('cat-edit-obs').value = t.observacao || '';
 
-  // Popular select agrupado por tipo
+  // Popular select — tipo esperado baseado no tipo da transação (CREDIT→RECEITA, DEBIT→DESPESA)
+  const tipoEsperado = t.tipo === 'CREDIT' ? 'RECEITA' : 'DESPESA';
   const sel = document.getElementById('cat-edit-categoria');
   sel.innerHTML = '<option value="">Selecione...</option>';
   const grupos = { DESPESA: [], RECEITA: [] };
-  _categorias.forEach(c => { if (grupos[c.tipo]) grupos[c.tipo].push(c); });
-  ['DESPESA', 'RECEITA'].forEach(tipo => {
+  _categorias.forEach(cat => { if (grupos[cat.tipo]) grupos[cat.tipo].push(cat); });
+  // Mostrar tipo esperado primeiro com destaque
+  const ordemTipos = tipoEsperado === 'RECEITA' ? ['RECEITA','DESPESA'] : ['DESPESA','RECEITA'];
+  ordemTipos.forEach(tipo => {
     if (!grupos[tipo].length) return;
     const og = document.createElement('optgroup');
-    og.label = tipo;
+    og.label = tipo === tipoEsperado ? `✓ ${tipo} (sugerido)` : tipo;
     grupos[tipo].forEach(cat => {
       const opt = document.createElement('option');
       opt.value = cat.id;
@@ -4077,8 +4080,9 @@ function renderBalancete() {
   if (filtroTipo) txs = txs.filter(t => t.categorias?.tipo === filtroTipo);
 
   // KPIs
-  const receitas  = txs.filter(t => t.tipo === 'CREDIT').reduce((s, t) => s + Math.abs(t.valor), 0);
-  const despesas  = txs.filter(t => t.tipo === 'DEBIT').reduce((s, t) => s + Math.abs(t.valor), 0);
+  // KPIs baseados no tipo da CATEGORIA (não da transação)
+  const receitas  = txs.filter(t => t.categorias?.tipo === 'RECEITA').reduce((s, t) => s + Math.abs(t.valor), 0);
+  const despesas  = txs.filter(t => t.categorias?.tipo === 'DESPESA').reduce((s, t) => s + Math.abs(t.valor), 0);
   const saldo     = receitas - despesas;
   const corSaldo  = saldo >= 0 ? 'var(--green)' : 'var(--red)';
 
