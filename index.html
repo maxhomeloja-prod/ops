@@ -5184,7 +5184,7 @@ async function loadBalancete() {
 
   // Carregar transações bancárias
   if (empresa === 'tudo' || empresa === '06af0934-2b30-4981-ab0a-ce75725858df' || empresa === '3ea4e54f-10a9-4ece-8815-442698002499') {
-    let q = `transacoes?select=*,categorias(nome,tipo,cor,categoria_pai_id)&status=eq.CONFIRMADA&order=data.desc&limit=1000${filtroData}`;
+    let q = `transacoes?select=id,data,descricao,valor,tipo,status,empresa_id,categoria_id,categorias(nome,tipo,cor,categoria_pai_id)&status=eq.CONFIRMADA&order=data.desc&limit=1000${filtroData}`;
     if (empresa !== 'tudo') q += `&empresa_id=eq.${empresa}`;
     const data = await finGet(q);
     txs = txs.concat(Array.isArray(data) ? data : []);
@@ -5192,8 +5192,8 @@ async function loadBalancete() {
 
   // Carregar caixa físico (entradas + saídas)
   if (empresa === 'tudo' || empresa === 'caixa') {
-    const qEnt = `caixa_entradas?select=*,categorias(nome,tipo,categoria_pai_id)&order=data.desc&limit=1000${filtroData}`;
-    const qSai = `caixa_saidas?select=*,categorias(nome,tipo,categoria_pai_id)&order=data.desc&limit=1000${filtroData}`;
+    const qEnt = `caixa_entradas?select=id,data,data_vencimento,descricao,valor_original,tipo,categoria_id,categorias(nome,tipo,categoria_pai_id)&order=data.desc&limit=1000${filtroData}`;
+    const qSai = `caixa_saidas?select=id,data,descricao,valor_total,categoria_id,categorias(nome,tipo,categoria_pai_id)&order=data.desc&limit=1000${filtroData}`;
     const [ents, sais] = await Promise.all([finGet(qEnt), finGet(qSai)]);
     const entsTx = (Array.isArray(ents) ? ents : []).map(e => ({
       id: e.id, data: e.data, descricao: e.descricao, valor: e.valor_original,
