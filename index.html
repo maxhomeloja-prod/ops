@@ -4883,7 +4883,7 @@ async function loadCategorizacao() {
   const ate     = document.getElementById('cat-filter-ate').value;
 
   let q = 'transacoes?select=*&status=eq.PENDENTE&order=data.desc&limit=200';
-  if (empresa) q += `&empresa_id=eq.${empresa}`;
+  if (empresa && empresa !== 'tudo' && empresa !== 'caixa') q += `&empresa_id=eq.${empresa}`;
   if (tipo)    q += `&tipo=eq.${tipo}`;
   if (de)      q += `&data=gte.${de}`;
   if (ate)     q += `&data=lte.${ate}`;
