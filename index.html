@@ -5197,11 +5197,11 @@ async function loadBalancete() {
     const [ents, sais] = await Promise.all([finGet(qEnt), finGet(qSai)]);
     const entsTx = (Array.isArray(ents) ? ents : []).map(e => ({
       id: e.id, data: e.data, descricao: e.descricao, valor: e.valor_original,
-      tipo: 'CREDIT', status: 'CONFIRMADA', categorias: e.categorias, origem: 'caixa'
+      tipo: 'CREDIT', status: 'CONFIRMADA', categorias: e.categorias, categoria_id: e.categoria_id, origem: 'caixa'
     }));
     const saisTx = (Array.isArray(sais) ? sais : []).map(s => ({
       id: s.id, data: s.data, descricao: s.descricao, valor: s.valor_total,
-      tipo: 'DEBIT', status: 'CONFIRMADA', categorias: s.categorias, origem: 'caixa'
+      tipo: 'DEBIT', status: 'CONFIRMADA', categorias: s.categorias, categoria_id: s.categoria_id, origem: 'caixa'
     }));
     txs = txs.concat(entsTx, saisTx);
   }
@@ -5346,8 +5346,10 @@ function renderBalancete() {
       <td></td>
     </tr>`);
     g.txs.forEach(t => {
+      const corE = g.tipo==='RECEITA' ? 'var(--green)' : g.tipo==='DESPESA' ? 'var(--red)' : 'var(--gray)';
       rowsE.push(`<tr class="bal-detail-row" data-group="${idx}" style="display:none;background:#f9fafb">
-        <td colspan="3" style="padding:6px 12px 6px 32px;font-size:12px;color:var(--gray)">${(t.data||'').substring(0,10).split('-').reverse().join('/')} — ${t.descricao||'—'}</td>
+        <td colspan="2" style="padding:6px 12px 6px 32px;font-size:12px;color:var(--gray)">${(t.data||'').substring(0,10).split('-').reverse().join('/')} — ${t.descricao||'—'}</td>
+        <td style="font-size:12px;font-weight:600;color:${corE}">${'R$ '+Math.abs(t.valor).toFixed(2).replace('.',',')}</td>
         <td></td><td></td>
       </tr>`);
     });
