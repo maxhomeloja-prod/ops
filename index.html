@@ -1493,8 +1493,11 @@
           <div class="me-field">
             <label>Meio</label>
             <select id="lanc-edit-meio" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none">
+              <option value="PIX">PIX</option>
               <option value="CHEQUE">Cheque</option>
               <option value="DINHEIRO">Dinheiro</option>
+              <option value="DEBITO_AUTOMATICO">Débito Automático</option>
+              <option value="BOLETO">Boleto</option>
             </select>
           </div>
         </div>
@@ -4802,17 +4805,38 @@ async function _carregarFornecedores() {
 
 function filtrarListaCF() {
   const inp = document.getElementById('lanc-edit-cf');
-  const q = inp?.value.trim().toLowerCase() || '';
+  const q = inp?.value.trim() || '';
+  const ql = q.toLowerCase();
   const lista = document.getElementById('lanc-cf-list');
   if (!lista) return;
-  const filtrados = q ? _fornecedoresList.filter(f => f.toLowerCase().includes(q)) : _fornecedoresList;
-  if (!filtrados.length) { lista.style.display = 'none'; return; }
-  lista.innerHTML = filtrados.slice(0,10).map(f =>
-    `<div onmousedown="selecionarCF('${f.replace(/'/g,"\'")}')"
+  const filtrados = ql ? _fornecedoresList.filter(f => f.toLowerCase().includes(ql)) : _fornecedoresList;
+  let html = filtrados.slice(0,10).map(f =>
+    `<div onmousedown="selecionarCF('${f.replace(/\\/g,'\\\\').replace(/'/g,"\'")}')"
       style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)"
       onmouseover="this.style.background='#f0faf9'" onmouseout="this.style.background=''">${f}</div>`
   ).join('');
-  lista.style.display = 'block';
+  // Mostrar opção de cadastrar se digitou algo que não existe exatamente
+  const jaExiste = _fornecedoresList.some(f => f.toLowerCase() === ql);
+  if (q && !jaExiste) {
+    html += `<div onmousedown="cadastrarNovoCF('${q.replace(/\\/g,'\\\\').replace(/'/g,"\'")}')"
+      style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--teal-dark);font-weight:600;background:#f0faf9;border-top:1px solid var(--border)"
+      onmouseover="this.style.background='#e0f5f0'" onmouseout="this.style.background='#f0faf9'">
+      ➕ Cadastrar "${q}"
+    </div>`;
+  }
+  lista.style.display = (html || q) ? 'block' : 'none';
+  lista.innerHTML = html || (q ? '' : '');
+  if (!html && !q) lista.style.display = 'none';
+}
+
+function cadastrarNovoCF(nome) {
+  // Adicionar à lista local imediatamente
+  if (!_fornecedoresList.includes(nome)) {
+    _fornecedoresList.push(nome);
+    _fornecedoresList.sort();
+  }
+  selecionarCF(nome);
+  toast(`✓ "${nome}" adicionado como novo fornecedor/cliente`, 'success');
 }
 
 function mostrarListaCF() {
@@ -5275,7 +5299,7 @@ function renderBalancete() {
 
   const totR = Object.values(grupos).filter(g=>g.tipo==='RECEITA' && !g.especial).reduce((s,g)=>s+g.total,0)||1;
   const totD = Object.values(grupos).filter(g=>g.tipo==='DESPESA' && !g.especial).reduce((s,g)=>s+g.total,0)||1;
-  const linhas = Object.values(grupos).sort((a,b) => a.tipo!==b.tipo ? (a.tipo==='DESPESA'?-1:1) : b.total-a.total);
+  const linhas = Object.values(grupos).filter(g => !g.especial).sort((a,b) => a.tipo!==b.tipo ? (a.tipo==='DESPESA'?-1:1) : b.total-a.total);
 
   const rowsD = [];
   const rowsR = [];
