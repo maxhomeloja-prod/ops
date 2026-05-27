@@ -5242,8 +5242,11 @@ function renderBalancete() {
   let txs = _balTransacoes;
   if (filtroTipo) txs = txs.filter(t => t.categorias?.tipo === filtroTipo);
 
-  const receitas = txs.filter(t => t.categorias?.tipo === 'RECEITA').reduce((s,t) => s + Math.abs(t.valor), 0);
-  const despesas = txs.filter(t => t.categorias?.tipo === 'DESPESA').reduce((s,t) => s + Math.abs(t.valor), 0);
+  // KPIs excluem categorias especiais (Transferências, Outras Receitas, Outras Despesas)
+  const _CATS_ESP = new Set(["6d58abb5-755b-4b19-9e4a-d490570e4b8f","405619d5-a208-478b-b09a-ab28e73307e0","4c734a9a-691d-4349-b8bb-ca1a78262077"]);
+  const txsKpi = txs.filter(t => !t.categoria_id || !_CATS_ESP.has(t.categoria_id));
+  const receitas = txsKpi.filter(t => t.categorias?.tipo === 'RECEITA').reduce((s,t) => s + Math.abs(t.valor), 0);
+  const despesas = txsKpi.filter(t => t.categorias?.tipo === 'DESPESA').reduce((s,t) => s + Math.abs(t.valor), 0);
   const saldo    = receitas - despesas;
   const corSaldo = saldo >= 0 ? 'var(--green)' : 'var(--red)';
 
@@ -5255,7 +5258,7 @@ function renderBalancete() {
   `;
 
   // IDs de categorias especiais (Transferências, Outras Receitas, Outras Despesas)
-  const CATS_ESPECIAIS = new Set(["405619d5-a208-478b-b09a-ab28e73307e0", "6d58abb5-755b-4b19-9e4a-d490570e4b8f", "4c734a9a-691d-4349-b8bb-ca1a78262077"]);
+  const CATS_ESPECIAIS = new Set(["6d58abb5-755b-4b19-9e4a-d490570e4b8f", "405619d5-a208-478b-b09a-ab28e73307e0", "4c734a9a-691d-4349-b8bb-ca1a78262077"]);
   const grupos = {};
   txs.forEach(t => {
     const cat = t.categorias || {};
@@ -5270,8 +5273,8 @@ function renderBalancete() {
     grupos[key].txs.push(t);
   });
 
-  const totR = Object.values(grupos).filter(g=>g.tipo==='RECEITA').reduce((s,g)=>s+g.total,0)||1;
-  const totD = Object.values(grupos).filter(g=>g.tipo==='DESPESA').reduce((s,g)=>s+g.total,0)||1;
+  const totR = Object.values(grupos).filter(g=>g.tipo==='RECEITA' && !g.especial).reduce((s,g)=>s+g.total,0)||1;
+  const totD = Object.values(grupos).filter(g=>g.tipo==='DESPESA' && !g.especial).reduce((s,g)=>s+g.total,0)||1;
   const linhas = Object.values(grupos).sort((a,b) => a.tipo!==b.tipo ? (a.tipo==='DESPESA'?-1:1) : b.total-a.total);
 
   const rowsD = [];
