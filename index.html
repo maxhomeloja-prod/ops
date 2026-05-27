@@ -4720,15 +4720,19 @@ function renderLancamentos() {
   const cardsCat = Object.entries(porCat)
     .sort((a,b) => b[1].total - a[1].total)
     .map(([nome, d]) => {
-      const cor = d.tipo === 'RECEITA' ? 'var(--green)' : 'var(--red)';
-      return `<div class="pag-summary-card" style="border-top:3px solid ${cor}">
-        <div class="pag-summary-label" style="font-size:10px">${nome}</div>
-        <div class="pag-summary-val" style="font-size:15px;color:${cor}">${fmt(d.total)}</div>
-      </div>`;
+      return `<tr>
+        <td style="padding:4px 16px 4px 0;text-align:left">${nome}</td>
+        <td style="padding:4px 0;text-align:right;font-weight:600">${fmt(d.total)}</td>
+      </tr>`;
     }).join('');
 
+  const saldo = totalReceber - totalPagar;
+  const corSaldo = saldo > 0 ? 'var(--green)' : saldo < 0 ? 'var(--red)' : 'var(--orange)';
+  const saldoLabel = saldo > 0 ? '▲ Positivo' : saldo < 0 ? '▼ Negativo' : '● Neutro';
+
   document.getElementById('lanc-summary').innerHTML = `
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+    <div style="font-size:11px;color:var(--gray);margin-bottom:6px">${rows.length} registro${rows.length!==1?'s':''}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
       <div class="pag-summary-card" style="border-top:3px solid var(--red)">
         <div class="pag-summary-label">A Pagar</div>
         <div class="pag-summary-val" style="color:var(--red)">${fmt(totalPagar)}</div>
@@ -4737,16 +4741,17 @@ function renderLancamentos() {
         <div class="pag-summary-label">A Receber</div>
         <div class="pag-summary-val" style="color:var(--green)">${fmt(totalReceber)}</div>
       </div>
-      <div class="pag-summary-card" style="border-top:3px solid var(--orange)">
-        <div class="pag-summary-label">Em Aberto</div>
-        <div class="pag-summary-val" style="color:var(--orange)">${fmt(totalAberto)}</div>
-      </div>
-      <div class="pag-summary-card" style="border-top:3px solid var(--blue)">
-        <div class="pag-summary-label">Registros</div>
-        <div class="pag-summary-val">${rows.length}</div>
+      <div class="pag-summary-card" style="border-top:3px solid ${corSaldo}">
+        <div class="pag-summary-label">Saldo</div>
+        <div class="pag-summary-val" style="color:${corSaldo}">${fmt(Math.abs(saldo))}</div>
+        <div style="font-size:10px;color:${corSaldo};margin-top:2px">${saldoLabel}</div>
       </div>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">${cardsCat}</div>`;
+    ${cardsCat ? `<div style="overflow-x:auto">
+      <table style="border-collapse:collapse;font-size:12px;color:var(--gray);margin:0 auto">
+        <tbody>${cardsCat}</tbody>
+      </table>
+    </div>` : ''}`;
 
   if (!rows.length) {
     document.getElementById('lanc-tbody').innerHTML = '';
