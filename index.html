@@ -1126,7 +1126,7 @@
             <th>Itens</th>
             <th>Valor</th>
             <th>Status</th>
-            <th>Lançado</th>
+            
             <th>Ações</th>
           </tr>
         </thead>
@@ -1327,6 +1327,7 @@
 
   <!-- VIEW: BALANCETE -->
   <div class="view" id="view-balancete">
+    <div id="bal-saldos" style="text-align:right;font-size:11px;color:var(--gray);margin-bottom:12px;line-height:1.8"></div>
     <div class="pag-filters">
       <select class="dash-filter-select" id="bal-filter-empresa" onchange="loadBalancete()">
         <option value="tudo">Todas as empresas</option>
@@ -1352,11 +1353,18 @@
           <tbody id="bal-tbody-despesa"></tbody>
         </table>
       </div>
-      <div id="bal-section-receita" style="display:none">
+      <div id="bal-section-receita" style="margin-bottom:24px;display:none">
         <div style="font-size:13px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--green)">💰 Receitas</div>
         <table class="pag-table">
           <thead><tr><th>Categoria</th><th>Total</th><th>Qtde</th><th style="width:200px">Participação</th></tr></thead>
           <tbody id="bal-tbody-receita"></tbody>
+        </table>
+      </div>
+      <div id="bal-section-especial" style="display:none">
+        <div style="font-size:13px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--gray)">🔄 Transferências e Outros</div>
+        <table class="pag-table">
+          <thead><tr><th>Categoria</th><th>Tipo</th><th>Total</th><th>Qtde</th><th style="width:200px">Participação</th></tr></thead>
+          <tbody id="bal-tbody-especial"></tbody>
         </table>
       </div>
     </div>
@@ -1490,9 +1498,11 @@
             </select>
           </div>
         </div>
-        <div class="me-field" id="lanc-cliente-wrap">
+        <div class="me-field" id="lanc-cliente-wrap" style="position:relative">
           <label id="lanc-label-cf">Fornecedor</label>
-          <input type="text" id="lanc-edit-cf" placeholder="Nome...">
+          <input type="text" id="lanc-edit-cf" placeholder="Digite ou selecione..." autocomplete="off"
+            oninput="filtrarListaCF()" onfocus="mostrarListaCF()" onblur="setTimeout(()=>ocultarListaCF(),200)">
+          <div id="lanc-cf-list" style="display:none;position:absolute;z-index:999;background:white;border:1.5px solid var(--border);border-radius:8px;max-height:180px;overflow-y:auto;width:100%;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
         </div>
         <div class="me-field"><label>Descrição</label><input type="text" id="lanc-edit-desc" placeholder="Descrição do lançamento..."></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -3309,6 +3319,23 @@ async function confirmarEntrega() {
       itens: itensStr
     });
 
+    // 1b. Auto-criar lançamento financeiro
+    try {
+      const catFaccaoId = await _getCatId('Facção');
+      await finPost('lancamentos_externos', {
+        data: dataISO,
+        data_vencimento: dataISO,
+        descricao: `Facção — ${usuarioLogado} (${hoje.toLocaleDateString('pt-BR')})`,
+        valor: parseFloat(total.toFixed(2)),
+        tipo_lancamento: 'PAGAR',
+        meio_pagamento: 'DINHEIRO',
+        situacao: 'EM_ABERTO',
+        fornecedor: usuarioLogado,
+        categoria_id: catFaccaoId,
+        observacao: 'Gerado automaticamente via Pagamentos'
+      });
+    } catch(e) { console.error('Erro ao criar lançamento automático:', e); }
+
     // 2. Atualizar OPs (apenas itens com OP vinculada)
     for (const item of carrinho) {
       if (item.semOP) continue; // Pular itens sem OP
@@ -3465,7 +3492,7 @@ async function loadPagamentos() {
 function renderPagamentos() {
   const respF = document.getElementById('pag-filter-resp').value;
   const statusF = document.getElementById('pag-filter-status').value;
-  const lancadoF = document.getElementById('pag-filter-lancado').value;
+  const lancadoF = '';
 
   let rows = allPagamentos.filter(r => {
     if (respF && r.responsavel !== respF) return false;
@@ -3501,23 +3528,16 @@ function renderPagamentos() {
     const statusBadge = r.status === 'Pago'
       ? '<span class="pag-badge pago">✓ Pago</span>'
       : '<span class="pag-badge aberto">● Em aberto</span>';
-    const lancadoBadge = r.lancado
-      ? '<span class="pag-badge lancado">✓ Lançado</span>'
-      : '<span class="pag-badge nao-lancado">Não lançado</span>';
     const btnStatus = r.status === 'Pago'
       ? `<button class="btn-pag btn-marcar-aberto" onclick="togglePagStatus(${r.id}, 'Em aberto')">↩ Reabrir</button>`
       : `<button class="btn-pag btn-marcar-pago" onclick="togglePagStatus(${r.id}, 'Pago')">✓ Marcar pago</button>`;
-    const btnLancado = r.lancado
-      ? `<button class="btn-pag btn-marcar-aberto" onclick="toggleLancado(${r.id}, false)">↩ Desmarcar</button>`
-      : `<button class="btn-pag btn-marcar-lancado" onclick="toggleLancado(${r.id}, true)">✓ Lançar</button>`;
     return `<tr>
       <td style="white-space:nowrap">${data}</td>
       <td style="font-weight:600">${r.responsavel || '—'}</td>
       <td style="font-size:11px;color:var(--gray);max-width:200px">${itens}</td>
       <td style="font-weight:700">${valor}</td>
       <td>${statusBadge}</td>
-      <td>${lancadoBadge}</td>
-      <td style="display:flex;gap:6px;flex-wrap:wrap">${btnStatus} ${btnLancado}</td>
+      <td>${btnStatus}</td>
     </tr>`;
   }).join('');
 }
@@ -4152,6 +4172,29 @@ async function finPatch(path, body) {
 }
 
 
+
+async function finPost(table, body) {
+  const res = await fetch(FIN_URL + '/' + table, {
+    method: 'POST',
+    headers: { 'apikey': FIN_KEY, 'Authorization': 'Bearer ' + FIN_KEY,
+      'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+    body: JSON.stringify(body)
+  });
+  return res.ok;
+}
+
+let _catIdCache = {};
+async function _getCatId(nome) {
+  if (_catIdCache[nome]) return _catIdCache[nome];
+  if (_categorias.length) {
+    const cat = _categorias.find(c => c.nome === nome);
+    if (cat) { _catIdCache[nome] = cat.id; return cat.id; }
+  }
+  const data = await finGet('categorias?select=id,nome&nome=eq.' + encodeURIComponent(nome) + '&ativa=eq.true');
+  if (data?.[0]) { _catIdCache[nome] = data[0].id; return data[0].id; }
+  return null;
+}
+
 // ─── CAIXA ────────────────────────────────────────────────────────
 let _caixaEntradas = [];
 let _caixaSaidas   = [];
@@ -4318,7 +4361,8 @@ async function salvarEntrada() {
   const catId = document.getElementById('ent-edit-cat').value || null;
   const obs   = document.getElementById('ent-edit-obs').value || null;
 
-  if (!data || !desc || !valor || valor <= 0) { toast('Preencha data, descrição e valor.', 'error'); return; }
+  const descFinal = desc || cf || (tipo === 'RECEBER' ? 'Recebimento' : 'Pagamento');
+  if (!data || !valor || valor <= 0) { toast('Preencha data e valor.', 'error'); return; }
   if (tipo === 'CHEQUE' && !venc) { toast('Informe a data de vencimento do cheque.', 'error'); return; }
 
   const cliente    = document.getElementById('ent-edit-cliente').value.trim() || null;
@@ -4514,7 +4558,8 @@ async function confirmarSaida() {
   const desc  = document.getElementById('sai-edit-desc').value.trim();
   const catId = document.getElementById('sai-edit-cat').value || null;
   const obs   = document.getElementById('sai-edit-obs').value || null;
-  if (!data || !desc || !valor || valor <= 0) { toast('Preencha data, descrição e valor.', 'error'); return; }
+  const descFinal = desc || cf || (tipo === 'RECEBER' ? 'Recebimento' : 'Pagamento');
+  if (!data || !valor || valor <= 0) { toast('Preencha data e valor.', 'error'); return; }
 
   // Coletar entradas selecionadas
   const disponiveis = _caixaEntradas.map(e => ({ ...e, disponivel: getDisponivelEntrada(e.id) })).filter(e => e.disponivel > 0);
@@ -4738,6 +4783,53 @@ function renderLancamentos() {
 }
 
 
+
+// ─── AUTOCOMPLETE FORNECEDOR/CLIENTE ─────────────────────────────
+let _fornecedoresList = [];
+
+async function _carregarFornecedores() {
+  if (_fornecedoresList.length) return;
+  try {
+    const data = await finGet('lancamentos_externos?select=fornecedor,cliente&limit=2000');
+    const set = new Set();
+    (Array.isArray(data) ? data : []).forEach(l => {
+      if (l.fornecedor) set.add(l.fornecedor);
+      if (l.cliente)    set.add(l.cliente);
+    });
+    _fornecedoresList = [...set].sort();
+  } catch(e) {}
+}
+
+function filtrarListaCF() {
+  const inp = document.getElementById('lanc-edit-cf');
+  const q = inp?.value.trim().toLowerCase() || '';
+  const lista = document.getElementById('lanc-cf-list');
+  if (!lista) return;
+  const filtrados = q ? _fornecedoresList.filter(f => f.toLowerCase().includes(q)) : _fornecedoresList;
+  if (!filtrados.length) { lista.style.display = 'none'; return; }
+  lista.innerHTML = filtrados.slice(0,10).map(f =>
+    `<div onmousedown="selecionarCF('${f.replace(/'/g,"\'")}')"
+      style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)"
+      onmouseover="this.style.background='#f0faf9'" onmouseout="this.style.background=''">${f}</div>`
+  ).join('');
+  lista.style.display = 'block';
+}
+
+function mostrarListaCF() {
+  _carregarFornecedores().then(() => filtrarListaCF());
+}
+
+function ocultarListaCF() {
+  const lista = document.getElementById('lanc-cf-list');
+  if (lista) lista.style.display = 'none';
+}
+
+function selecionarCF(nome) {
+  const inp = document.getElementById('lanc-edit-cf');
+  if (inp) inp.value = nome;
+  ocultarListaCF();
+}
+
 function toggleLancClienteForn() {
   const tipo = document.getElementById('lanc-edit-tipo').value;
   const label = document.getElementById('lanc-label-cf');
@@ -4820,13 +4912,14 @@ async function salvarLancamento() {
   const catId  = document.getElementById('lanc-edit-categoria').value || null;
   const obs    = document.getElementById('lanc-edit-obs').value || null;
 
-  if (!data || !desc || !valor || valor <= 0) { toast('Preencha data, descrição e valor.', 'error'); return; }
+  const descFinal = desc || cf || (tipo === 'RECEBER' ? 'Recebimento' : 'Pagamento');
+  if (!data || !valor || valor <= 0) { toast('Preencha data e valor.', 'error'); return; }
 
   const cf     = document.getElementById('lanc-edit-cf').value.trim() || null;
   const venc   = document.getElementById('lanc-edit-venc').value || null;
   const cliente    = tipo === 'RECEBER' ? cf : null;
   const fornecedor = tipo === 'PAGAR'   ? cf : null;
-  const body = { data, data_vencimento: venc, descricao: desc, valor, tipo_lancamento: tipo, meio_pagamento: meio, situacao: sit, categoria_id: catId, observacao: obs, cliente, fornecedor, atualizado_em: new Date().toISOString() };
+  const body = { data, data_vencimento: venc, descricao: descFinal, valor, tipo_lancamento: tipo, meio_pagamento: meio, situacao: sit, categoria_id: catId, observacao: obs, cliente, fornecedor, atualizado_em: new Date().toISOString() };
 
   let ok;
   if (id) {
@@ -5090,6 +5183,21 @@ async function loadBalancete() {
   }
 
   _balTransacoes = txs;
+
+  // Carregar saldos das contas
+  try {
+    const saldos = await finGet('saldos_contas?select=nome,saldo&order=nome.asc');
+    const fmt2 = n => 'R$ ' + Number(n).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+    const el = document.getElementById('bal-saldos');
+    if (el && Array.isArray(saldos) && saldos.length) {
+      const total = saldos.reduce((s,x) => s + Number(x.saldo), 0);
+      el.innerHTML = saldos.map(s =>
+        `<span style="margin-left:16px;white-space:nowrap"><b style="color:var(--charcoal)">${s.nome}:</b> ${fmt2(s.saldo)}</span>`
+      ).join('') +
+      `<span style="margin-left:20px;padding-left:16px;border-left:1px solid var(--border);white-space:nowrap"><b style="color:var(--teal-dark)">Total: ${fmt2(total)}</b></span>`;
+    }
+  } catch(e) { console.log('saldos_contas ainda não criada'); }
+
   document.getElementById('bal-loading').style.display = 'none';
   document.getElementById('bal-content').style.display = 'block';
   renderBalancete();
@@ -5146,15 +5254,18 @@ function renderBalancete() {
     <div class="kpi-card blue"><div class="kpi-label">Lançamentos</div><div class="kpi-value">${fmtN(txs.length)}</div></div>
   `;
 
-  // Buscar nomes dos pais (para agrupar subcategorias de Custos Fixos)
+  // IDs de categorias especiais (Transferências, Outras Receitas, Outras Despesas)
+  const CATS_ESPECIAIS = new Set(["405619d5-a208-478b-b09a-ab28e73307e0", "6d58abb5-755b-4b19-9e4a-d490570e4b8f", "4c734a9a-691d-4349-b8bb-ca1a78262077"]);
   const grupos = {};
   txs.forEach(t => {
     const cat = t.categorias || {};
-    // Se tem pai, agrupa pelo pai; senão usa a própria categoria
+    const catId = t.categoria_id || null;
     const nomeFinal = cat.categoria_pai_id ? _getNomePai(cat.categoria_pai_id) || cat.nome : cat.nome || 'Sem categoria';
     const tipoFinal = cat.tipo || '—';
-    const key = tipoFinal + '::' + nomeFinal;
-    if (!grupos[key]) grupos[key] = { nome: nomeFinal, tipo: tipoFinal, total: 0, txs: [] };
+    // Marcar como especial se for Transferências/Outras
+    const especial = catId && CATS_ESPECIAIS.has(catId);
+    const key = (especial ? 'ESPECIAL' : tipoFinal) + '::' + nomeFinal;
+    if (!grupos[key]) grupos[key] = { nome: nomeFinal, tipo: tipoFinal, total: 0, txs: [], especial };
     grupos[key].total += Math.abs(t.valor);
     grupos[key].txs.push(t);
   });
@@ -5191,12 +5302,39 @@ function renderBalancete() {
     });
   });
 
+  const rowsE = [];
+  // Terceira tabela — especiais
+  const linhasE = Object.values(grupos).filter(g => g.especial).sort((a,b) => b.total-a.total);
+  linhasE.forEach((g, gi) => {
+    const totalRef = g.total || 1;
+    const pct = '100.0';
+    const cor = g.tipo==='RECEITA' ? 'var(--green)' : g.tipo==='DESPESA' ? 'var(--red)' : 'var(--gray)';
+    const badge = g.tipo==='RECEITA' ? 'lancado' : 'aberto';
+    const idx = 9000 + gi;
+    rowsE.push(`<tr class="bal-summary-row" onclick="toggleBalGroup(${idx})" style="cursor:pointer">
+      <td style="font-weight:600">${g.nome} <span id="bal-arrow-${idx}" style="font-size:10px;color:var(--gray)">▶</span></td>
+      <td><span class="pag-badge ${badge}">${g.tipo}</span></td>
+      <td style="font-weight:700;color:${cor}">${fmt(g.total)}</td>
+      <td style="color:var(--gray)">${g.txs.length}</td>
+      <td></td>
+    </tr>`);
+    g.txs.forEach(t => {
+      rowsE.push(`<tr class="bal-detail-row" data-group="${idx}" style="display:none;background:#f9fafb">
+        <td colspan="3" style="padding:6px 12px 6px 32px;font-size:12px;color:var(--gray)">${(t.data||'').substring(0,10).split('-').reverse().join('/')} — ${t.descricao||'—'}</td>
+        <td></td><td></td>
+      </tr>`);
+    });
+  });
+
   const secD = document.getElementById('bal-section-despesa');
   const secR = document.getElementById('bal-section-receita');
+  const secE = document.getElementById('bal-section-especial');
   document.getElementById('bal-tbody-despesa').innerHTML = rowsD.join('');
   document.getElementById('bal-tbody-receita').innerHTML = rowsR.join('');
+  document.getElementById('bal-tbody-especial').innerHTML = rowsE.join('');
   secD.style.display = rowsD.length ? 'block' : 'none';
   secR.style.display = rowsR.length ? 'block' : 'none';
+  secE.style.display = rowsE.length ? 'block' : 'none';
 }
 
 function toggleBalGroup(gi) {
