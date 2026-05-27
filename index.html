@@ -4689,8 +4689,8 @@ function renderLancamentos() {
     if (tipo && l.tipo_lancamento !== tipo) return false;
     if (sitEff && l.situacao !== sitEff) return false;
     if (catF  && l.categoria_id !== catF) return false;
-    if (de    && l.data < de) return false;
-    if (ate   && l.data > ate) return false;
+    if (de    && (l.data_vencimento||l.data) < de) return false;
+    if (ate   && (l.data_vencimento||l.data) > ate) return false;
     if (cfF) {
       const cliente    = (l.cliente||'').toLowerCase();
       const fornecedor = (l.fornecedor||'').toLowerCase();
