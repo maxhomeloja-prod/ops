@@ -5221,8 +5221,16 @@ async function loadBalancete() {
     if (el && Array.isArray(saldos) && saldos.length) {
       // Filtrar apenas contas bancárias (tipo BANK), ignorar cartões
       const bancarias = saldos.filter(s => s.contas_bancarias?.tipo === 'BANK');
+      // Buscar saldo do caixa físico
+      let saldoCaixa = 0;
+      try {
+        const caixaEnts = await finGet('caixa_entradas?select=valor_disponivel');
+        saldoCaixa = (Array.isArray(caixaEnts) ? caixaEnts : []).reduce((s,e) => s + Number(e.valor_disponivel), 0);
+      } catch(e) {}
+
       const total = bancarias.reduce((s,x) => s + Number(x.saldo_atual), 0);
-      const corTotal = total >= 0 ? 'var(--teal-dark)' : 'var(--red)';
+      const totalGeral = total + saldoCaixa;
+      const corTotal = totalGeral >= 0 ? 'var(--teal-dark)' : 'var(--red)';
       el.innerHTML = bancarias.map(s => {
         const banco = s.contas_bancarias?.banco || '—';
         const empresa = (s.empresas?.nome || '').includes('Lume') ? 'Lume' : 'Maxhome';
@@ -5231,7 +5239,8 @@ async function loadBalancete() {
         const cor = saldo >= 0 ? 'inherit' : 'var(--red)';
         return `<span style="margin-left:14px;white-space:nowrap"><b style="color:var(--charcoal)">${label}:</b> <span style="color:${cor}">${fmt2(saldo)}</span></span>`;
       }).join('') +
-      `<span style="margin-left:18px;padding-left:14px;border-left:1px solid var(--border);white-space:nowrap"><b style="color:${corTotal}">Total: ${fmt2(total)}</b></span>`;
+      `<span style="margin-left:14px;white-space:nowrap;padding-left:14px;border-left:1px solid var(--border)"><b style="color:var(--charcoal)">Caixa Físico:</b> <span style="color:var(--teal-dark)">${fmt2(saldoCaixa)}</span></span>` +
+      `<span style="margin-left:18px;padding-left:14px;border-left:1px solid var(--border);white-space:nowrap"><b style="color:${corTotal}">Total Geral: ${fmt2(totalGeral)}</b></span>`;
     }
   } catch(e) { console.log('Erro ao carregar saldos:', e); }
 
