@@ -5213,19 +5213,26 @@ async function loadBalancete() {
 
   _balTransacoes = txs;
 
-  // Carregar saldos das contas
+  // Carregar saldos das contas via saldos_conta (atualizado por trigger)
   try {
-    const saldos = await finGet('saldos_contas?select=nome,saldo&order=nome.asc');
+    const saldos = await finGet('saldos_conta?select=saldo_atual,atualizado_em,contas_bancarias(banco,nome_conta,tipo),empresas(nome)');
     const fmt2 = n => 'R$ ' + Number(n).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
     const el = document.getElementById('bal-saldos');
     if (el && Array.isArray(saldos) && saldos.length) {
-      const total = saldos.reduce((s,x) => s + Number(x.saldo), 0);
-      el.innerHTML = saldos.map(s =>
-        `<span style="margin-left:16px;white-space:nowrap"><b style="color:var(--charcoal)">${s.nome}:</b> ${fmt2(s.saldo)}</span>`
-      ).join('') +
-      `<span style="margin-left:20px;padding-left:16px;border-left:1px solid var(--border);white-space:nowrap"><b style="color:var(--teal-dark)">Total: ${fmt2(total)}</b></span>`;
+      // Filtrar apenas contas bancárias (tipo BANK), ignorar cartões
+      const bancarias = saldos.filter(s => s.contas_bancarias?.tipo === 'BANK');
+      const total = bancarias.reduce((s,x) => s + Number(x.saldo_atual), 0);
+      const corTotal = total >= 0 ? 'var(--teal-dark)' : 'var(--red)';
+      el.innerHTML = bancarias.map(s => {
+        const nome = s.contas_bancarias?.nome_conta || s.contas_bancarias?.banco || '—';
+        const empresa = s.empresas?.nome?.replace('Maxhome Industria e Comercio','Maxhome').replace('Lume Decor','Lume') || '';
+        const saldo = Number(s.saldo_atual);
+        const cor = saldo >= 0 ? 'inherit' : 'var(--red)';
+        return `<span style="margin-left:14px;white-space:nowrap"><b style="color:var(--charcoal)">${nome}:</b> <span style="color:${cor}">${fmt2(saldo)}</span></span>`;
+      }).join('') +
+      `<span style="margin-left:18px;padding-left:14px;border-left:1px solid var(--border);white-space:nowrap"><b style="color:${corTotal}">Total: ${fmt2(total)}</b></span>`;
     }
-  } catch(e) { console.log('saldos_contas ainda não criada'); }
+  } catch(e) { console.log('Erro ao carregar saldos:', e); }
 
   document.getElementById('bal-loading').style.display = 'none';
   document.getElementById('bal-content').style.display = 'block';
