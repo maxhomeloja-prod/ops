@@ -5289,7 +5289,7 @@ function renderBalancete() {
   if (filtroTipo) txs = txs.filter(t => t.categorias?.tipo === filtroTipo);
 
   // KPIs excluem categorias especiais (Transferências, Outras Receitas, Outras Despesas)
-  const _CATS_ESP = new Set(["6d58abb5-755b-4b19-9e4a-d490570e4b8f","405619d5-a208-478b-b09a-ab28e73307e0","4c734a9a-691d-4349-b8bb-ca1a78262077"]);
+  const _CATS_ESP = new Set(["6d58abb5-755b-4b19-9e4a-d490570e4b8f","405619d5-a208-478b-b09a-ab28e73307e0","4c734a9a-691d-4349-b8bb-ca1a78262077","73511595-cf4c-4906-b449-22cbccc026b2"]);
   const txsKpi = txs.filter(t => !t.categoria_id || !_CATS_ESP.has(t.categoria_id));
   const receitas = txsKpi.filter(t => t.categorias?.tipo === 'RECEITA').reduce((s,t) => s + Math.abs(t.valor), 0);
   const despesas = txsKpi.filter(t => t.categorias?.tipo === 'DESPESA').reduce((s,t) => s + Math.abs(t.valor), 0);
@@ -5304,7 +5304,7 @@ function renderBalancete() {
   `;
 
   // IDs de categorias especiais (Transferências, Outras Receitas, Outras Despesas)
-  const CATS_ESPECIAIS = new Set(["6d58abb5-755b-4b19-9e4a-d490570e4b8f", "405619d5-a208-478b-b09a-ab28e73307e0", "4c734a9a-691d-4349-b8bb-ca1a78262077"]);
+  const CATS_ESPECIAIS = new Set(["6d58abb5-755b-4b19-9e4a-d490570e4b8f", "405619d5-a208-478b-b09a-ab28e73307e0", "4c734a9a-691d-4349-b8bb-ca1a78262077", "73511595-cf4c-4906-b449-22cbccc026b2"]);
   const grupos = {};
   txs.forEach(t => {
     const cat = t.categorias || {};
