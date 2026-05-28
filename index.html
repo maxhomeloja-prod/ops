@@ -5313,7 +5313,8 @@ function renderBalancete() {
     const tipoFinal = cat.tipo || '—';
     // Marcar como especial se for Transferências/Outras
     const especial = catId && CATS_ESPECIAIS.has(catId);
-    const key = (especial ? 'ESPECIAL' : tipoFinal) + '::' + nomeFinal;
+    // Para especiais usar catId no key para separar DESPESA de RECEITA com mesmo nome
+    const key = especial ? ('ESPECIAL::' + catId) : (tipoFinal + '::' + nomeFinal);
     if (!grupos[key]) grupos[key] = { nome: nomeFinal, tipo: tipoFinal, total: 0, txs: [], especial };
     grupos[key].total += Math.abs(t.valor);
     grupos[key].txs.push(t);
