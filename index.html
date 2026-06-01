@@ -1344,7 +1344,9 @@
       </select>
       <button class="btn btn-outline" onclick="loadBalancete()">🔄 Atualizar</button>
     </div>
-    <div class="dash-grid" id="bal-kpis" style="margin-bottom:20px"></div>
+    <div class="dash-grid" id="bal-kpis" style="margin-bottom:16px"></div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button id="bal-btn-semanas" onclick="toggleFluxoSemanal()" style="font-size:12px;padding:6px 14px;border:1.5px solid var(--border);border-radius:8px;background:white;cursor:pointer;color:var(--gray)">📅 Ver fluxo semanal</button></div>
+    <div id="bal-fluxo-semanal" style="display:none;margin-bottom:20px"></div>
     <div class="loading" id="bal-loading"><div class="spinner"></div><div>Carregando...</div></div>
     <div id="bal-content" style="display:none">
       <div id="bal-section-despesa" style="margin-bottom:24px;display:none">
