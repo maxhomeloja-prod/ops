@@ -1335,7 +1335,8 @@
         <option value="3ea4e54f-10a9-4ece-8815-442698002499">Lume Decor</option>
         <option value="caixa">Caixa (Físico)</option>
       </select>
-      <input type="month" class="dash-filter-select" id="bal-filter-mes" onchange="loadBalancete()">
+      <input type="date" class="dash-filter-select" id="bal-filter-de" onchange="loadBalancete()">
+      <input type="date" class="dash-filter-select" id="bal-filter-ate" onchange="loadBalancete()">
       <select class="dash-filter-select" id="bal-filter-tipo" onchange="renderBalancete()">
         <option value="">DESPESA + RECEITA</option>
         <option value="DESPESA">Só Despesas</option>
@@ -4205,6 +4206,18 @@ let _caixaMovs     = [];
 let _caixaTab      = 'entradas';
 
 async function loadCaixa() {
+  // Inicializar datas com mês corrente se vazias
+  for (const id of ['ent-filter-de','ent-filter-ate','sai-filter-de','sai-filter-ate']) {
+    const el = document.getElementById(id);
+    if (el && !el.value) {
+      const now = new Date();
+      const ano = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
+      const isAte = id.includes('ate');
+      el.value = isAte
+        ? `${ano}-${m}-${new Date(ano, now.getMonth()+1, 0).getDate()}`
+        : `${ano}-${m}-01`;
+    }
+  }
   if (_categorias.length === 0) {
     const cats = await finGet('categorias?select=*,categoria_pai_id&ativa=eq.true&order=tipo,nome');
     _categorias = Array.isArray(cats) ? cats : [];
@@ -4657,6 +4670,15 @@ let _lancamentos = [];
 async function loadLancamentos() {
   document.getElementById('lanc-loading').style.display = 'block';
   document.getElementById('lanc-table-wrap').style.display = 'none';
+  // Inicializar datas com mês corrente se vazias
+  const lDeEl  = document.getElementById('lanc-filter-de');
+  const lAteEl = document.getElementById('lanc-filter-ate');
+  if (lDeEl && !lDeEl.value) {
+    const now = new Date();
+    const ano = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
+    lDeEl.value  = `${ano}-${m}-01`;
+    lAteEl.value = `${ano}-${m}-${new Date(ano, now.getMonth()+1, 0).getDate()}`;
+  }
   const data = await finGet('lancamentos_externos?select=*,categorias(nome,tipo,categoria_pai_id)&order=data_vencimento.asc&limit=2000');
   _lancamentos = Array.isArray(data) ? data : [];
   document.getElementById('lanc-loading').style.display = 'none';
@@ -4720,9 +4742,10 @@ function renderLancamentos() {
   const cardsCat = Object.entries(porCat)
     .sort((a,b) => b[1].total - a[1].total)
     .map(([nome, d]) => {
+      const corCat = d.tipo === 'RECEITA' ? 'var(--green)' : 'var(--red)';
       return `<tr>
-        <td style="padding:4px 16px 4px 0;text-align:left">${nome}</td>
-        <td style="padding:4px 0;text-align:right;font-weight:600">${fmt(d.total)}</td>
+        <td style="padding:4px 16px 4px 0;text-align:left;color:var(--gray)">${nome}</td>
+        <td style="padding:4px 0;text-align:right;font-weight:600;color:${corCat}">${fmt(d.total)}</td>
       </tr>`;
     }).join('');
 
@@ -5174,15 +5197,19 @@ async function loadBalancete() {
   document.getElementById('bal-content').style.display = 'none';
   document.getElementById('bal-kpis').innerHTML = '';
 
-  const empresa = document.getElementById('bal-filter-empresa').value;
-  const mes     = document.getElementById('bal-filter-mes').value;
-
-  let ini = '', fim = '';
-  if (mes) {
-    const [ano, m] = mes.split('-');
-    ini = `${ano}-${m}-01`;
-    fim = `${ano}-${m}-${new Date(ano, m, 0).getDate()}`;
+  // Inicializar datas com mês corrente se vazias
+  const deEl  = document.getElementById('bal-filter-de');
+  const ateEl = document.getElementById('bal-filter-ate');
+  if (deEl && !deEl.value) {
+    const now = new Date();
+    const ano = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
+    deEl.value  = `${ano}-${m}-01`;
+    ateEl.value = `${ano}-${m}-${new Date(ano, now.getMonth()+1, 0).getDate()}`;
   }
+
+  const empresa = document.getElementById('bal-filter-empresa').value;
+  const ini = deEl?.value  || '';
+  const fim = ateEl?.value || '';
 
   const filtroData = ini ? `&data=gte.${ini}&data=lte.${fim}` : '';
   let txs = [];
@@ -5387,6 +5414,97 @@ function renderBalancete() {
   secD.style.display = rowsD.length ? 'block' : 'none';
   secR.style.display = rowsR.length ? 'block' : 'none';
   secE.style.display = rowsE.length ? 'block' : 'none';
+  // Atualizar fluxo semanal se estiver aberto
+  if (_fluxoSemanalAberto) renderFluxoSemanal();
+}
+
+
+let _fluxoSemanalAberto = false;
+
+function toggleFluxoSemanal() {
+  _fluxoSemanalAberto = !_fluxoSemanalAberto;
+  const el = document.getElementById('bal-fluxo-semanal');
+  const btn = document.getElementById('bal-btn-semanas');
+  if (_fluxoSemanalAberto) {
+    renderFluxoSemanal();
+    el.style.display = 'block';
+    btn.style.background = 'var(--teal)';
+    btn.style.color = 'white';
+    btn.style.borderColor = 'var(--teal)';
+    btn.textContent = '📅 Ocultar fluxo semanal';
+  } else {
+    el.style.display = 'none';
+    btn.style.background = 'white';
+    btn.style.color = 'var(--gray)';
+    btn.style.borderColor = 'var(--border)';
+    btn.textContent = '📅 Ver fluxo semanal';
+  }
+}
+
+function renderFluxoSemanal() {
+  const txs = _balTransacoes;
+  if (!txs.length) return;
+  const CATS_ESP = new Set(["6d58abb5-755b-4b19-9e4a-d490570e4b8f","405619d5-a208-478b-b09a-ab28e73307e0","4c734a9a-691d-4349-b8bb-ca1a78262077","73511595-cf4c-4906-b449-22cbccc026b2"]);
+  const fmt = n => 'R$ ' + Math.abs(n).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+
+  // Agrupar por semana
+  const semanas = {};
+  txs.forEach(t => {
+    if (!t.data) return;
+    const d = new Date(t.data + 'T00:00:00');
+    const ano = d.getFullYear();
+    // Número da semana ISO
+    const startOfYear = new Date(ano, 0, 1);
+    const weekNum = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+    // Início da semana (segunda-feira)
+    const dayOfWeek = d.getDay() === 0 ? 6 : d.getDay() - 1;
+    const monday = new Date(d); monday.setDate(d.getDate() - dayOfWeek);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    const fmtDate = dt => `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+    const key = `${ano}-S${String(weekNum).padStart(2,'0')}`;
+    const label = `${fmtDate(monday)} – ${fmtDate(sunday)}`;
+    if (!semanas[key]) semanas[key] = { label, rec: 0, desp: 0, txs: [] };
+    const especial = t.categoria_id && CATS_ESP.has(t.categoria_id);
+    if (!especial) {
+      const tipo = t.categorias?.tipo;
+      if (tipo === 'RECEITA') semanas[key].rec += Math.abs(t.valor);
+      else if (tipo === 'DESPESA') semanas[key].desp += Math.abs(t.valor);
+    }
+    semanas[key].txs.push(t);
+  });
+
+  const rows = Object.entries(semanas).sort((a,b) => a[0] < b[0] ? -1 : 1).map(([key, s], gi) => {
+    const saldo = s.rec - s.desp;
+    const corSaldo = saldo >= 0 ? 'var(--green)' : 'var(--red)';
+    const idx = 8000 + gi;
+    return `
+      <tr class="bal-summary-row" onclick="toggleBalGroup(${idx})" style="cursor:pointer">
+        <td style="font-weight:600;color:var(--charcoal)">${s.label} <span id="bal-arrow-${idx}" style="font-size:10px;color:var(--gray)">▶</span></td>
+        <td style="color:var(--green);font-weight:600">${fmt(s.rec)}</td>
+        <td style="color:var(--red);font-weight:600">${fmt(s.desp)}</td>
+        <td style="color:${corSaldo};font-weight:700">${fmt(saldo)}</td>
+      </tr>
+      ${s.txs.map(t => {
+        const esp = t.categoria_id && CATS_ESP.has(t.categoria_id);
+        const cor = esp ? 'var(--gray)' : t.categorias?.tipo === 'RECEITA' ? 'var(--green)' : 'var(--red)';
+        return `<tr class="bal-detail-row" data-group="${idx}" style="display:none;background:#f9fafb">
+          <td style="padding:5px 12px 5px 28px;font-size:12px;color:var(--gray)" colspan="2">${(t.data||'').substring(0,10).split('-').reverse().join('/')} — ${t.descricao||'—'}</td>
+          <td></td>
+          <td style="font-size:12px;font-weight:600;color:${cor};padding-right:8px">${fmt(t.valor)}</td>
+        </tr>`;
+      }).join('')}`;
+  }).join('');
+
+  document.getElementById('bal-fluxo-semanal').innerHTML = `
+    <table class="pag-table">
+      <thead><tr>
+        <th>Semana</th>
+        <th style="color:var(--green)">Receitas</th>
+        <th style="color:var(--red)">Despesas</th>
+        <th>Saldo</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
 
 function toggleBalGroup(gi) {
@@ -5399,6 +5517,94 @@ function toggleBalGroup(gi) {
     details.forEach(r => r.style.display = 'table-row');
     if (arrow) arrow.textContent = '▼';
   }
+}
+
+
+
+function toggleFluxoSemanal() {
+  _fluxoSemanalAberto = !_fluxoSemanalAberto;
+  const el = document.getElementById('bal-fluxo-semanal');
+  const btn = document.getElementById('bal-btn-semanas');
+  if (_fluxoSemanalAberto) {
+    renderFluxoSemanal();
+    el.style.display = 'block';
+    btn.style.background = 'var(--teal)';
+    btn.style.color = 'white';
+    btn.style.borderColor = 'var(--teal)';
+    btn.textContent = '📅 Ocultar fluxo semanal';
+  } else {
+    el.style.display = 'none';
+    btn.style.background = 'white';
+    btn.style.color = 'var(--gray)';
+    btn.style.borderColor = 'var(--border)';
+    btn.textContent = '📅 Ver fluxo semanal';
+  }
+}
+
+function renderFluxoSemanal() {
+  const txs = _balTransacoes;
+  if (!txs.length) return;
+  const CATS_ESP = new Set(["6d58abb5-755b-4b19-9e4a-d490570e4b8f","405619d5-a208-478b-b09a-ab28e73307e0","4c734a9a-691d-4349-b8bb-ca1a78262077","73511595-cf4c-4906-b449-22cbccc026b2"]);
+  const fmt = n => 'R$ ' + Math.abs(n).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+
+  // Agrupar por semana
+  const semanas = {};
+  txs.forEach(t => {
+    if (!t.data) return;
+    const d = new Date(t.data + 'T00:00:00');
+    const ano = d.getFullYear();
+    // Número da semana ISO
+    const startOfYear = new Date(ano, 0, 1);
+    const weekNum = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+    // Início da semana (segunda-feira)
+    const dayOfWeek = d.getDay() === 0 ? 6 : d.getDay() - 1;
+    const monday = new Date(d); monday.setDate(d.getDate() - dayOfWeek);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    const fmtDate = dt => `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+    const key = `${ano}-S${String(weekNum).padStart(2,'0')}`;
+    const label = `${fmtDate(monday)} – ${fmtDate(sunday)}`;
+    if (!semanas[key]) semanas[key] = { label, rec: 0, desp: 0, txs: [] };
+    const especial = t.categoria_id && CATS_ESP.has(t.categoria_id);
+    if (!especial) {
+      const tipo = t.categorias?.tipo;
+      if (tipo === 'RECEITA') semanas[key].rec += Math.abs(t.valor);
+      else if (tipo === 'DESPESA') semanas[key].desp += Math.abs(t.valor);
+    }
+    semanas[key].txs.push(t);
+  });
+
+  const rows = Object.entries(semanas).sort((a,b) => a[0] < b[0] ? -1 : 1).map(([key, s], gi) => {
+    const saldo = s.rec - s.desp;
+    const corSaldo = saldo >= 0 ? 'var(--green)' : 'var(--red)';
+    const idx = 8000 + gi;
+    return `
+      <tr class="bal-summary-row" onclick="toggleBalGroup(${idx})" style="cursor:pointer">
+        <td style="font-weight:600;color:var(--charcoal)">${s.label} <span id="bal-arrow-${idx}" style="font-size:10px;color:var(--gray)">▶</span></td>
+        <td style="color:var(--green);font-weight:600">${fmt(s.rec)}</td>
+        <td style="color:var(--red);font-weight:600">${fmt(s.desp)}</td>
+        <td style="color:${corSaldo};font-weight:700">${fmt(saldo)}</td>
+      </tr>
+      ${s.txs.map(t => {
+        const esp = t.categoria_id && CATS_ESP.has(t.categoria_id);
+        const cor = esp ? 'var(--gray)' : t.categorias?.tipo === 'RECEITA' ? 'var(--green)' : 'var(--red)';
+        return `<tr class="bal-detail-row" data-group="${idx}" style="display:none;background:#f9fafb">
+          <td style="padding:5px 12px 5px 28px;font-size:12px;color:var(--gray)" colspan="2">${(t.data||'').substring(0,10).split('-').reverse().join('/')} — ${t.descricao||'—'}</td>
+          <td></td>
+          <td style="font-size:12px;font-weight:600;color:${cor};padding-right:8px">${fmt(t.valor)}</td>
+        </tr>`;
+      }).join('')}`;
+  }).join('');
+
+  document.getElementById('bal-fluxo-semanal').innerHTML = `
+    <table class="pag-table">
+      <thead><tr>
+        <th>Semana</th>
+        <th style="color:var(--green)">Receitas</th>
+        <th style="color:var(--red)">Despesas</th>
+        <th>Saldo</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
 
 function toggleBalGroup(gi) {
