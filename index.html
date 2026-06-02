@@ -1713,6 +1713,8 @@
     </div>
   </div>
 
+
+
 </main>
 
 <!-- MODAL DETALHE OP -->
@@ -4158,20 +4160,44 @@ renderMaxOps = function() {
 
 
 // ─── CONFIG FINANCEIRO ────────────────────────────────────────────
-const FIN_URL = 'https://ynwkgersqcxglryrwqxl.supabase.co/rest/v1';
-const FIN_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlud2tnZXJzcWN4Z2xyeXJ3cXhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODA4NDMsImV4cCI6MjA5NDg1Njg0M30.Pi7SMfACrMoyPcnFlOWXQ7BVojYpZucNgjUgVJ0f7Hw';
+// ─── SUPABASE FINANCEIRO ─────────────────────────────────────────
+const FIN_SUPABASE_URL = 'https://ynwkgersqcxglryrwqxl.supabase.co';
+const FIN_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlud2tnZXJzcWN4Z2xyeXJ3cXhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODA4NDMsImV4cCI6MjA5NDg1Njg0M30.Pi7SMfACrMoyPcnFlOWXQ7BVojYpZucNgjUgVJ0f7Hw';
+const FIN_URL = FIN_SUPABASE_URL + '/rest/v1';
+const FIN_KEY = FIN_ANON_KEY;
+
+// Token de usuário autenticado (obtido no init)
+let _finToken = null;
+
+async function initFinAuth() {
+  try {
+    const res = await fetch(`${FIN_SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'apikey': FIN_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'mu.constantino@gmail.com', password: 'murilo456' })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      _finToken = data.access_token;
+      // Auto-refresh
+      setTimeout(initFinAuth, (data.expires_in - 120) * 1000);
+    }
+  } catch(e) { setTimeout(initFinAuth, 30000); }
+}
 
 async function finGet(path) {
+  const token = _finToken || FIN_ANON_KEY;
   const res = await fetch(`${FIN_URL}/${path}`, {
-    headers: { 'apikey': FIN_KEY, 'Authorization': `Bearer ${FIN_KEY}` }
+    headers: { 'apikey': FIN_ANON_KEY, 'Authorization': `Bearer ${token}` }
   });
   return res.json();
 }
 
 async function finPatch(path, body) {
+  const token = _finToken || FIN_ANON_KEY;
   const res = await fetch(`${FIN_URL}/${path}`, {
     method: 'PATCH',
-    headers: { 'apikey': FIN_KEY, 'Authorization': `Bearer ${FIN_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+    headers: { 'apikey': FIN_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
     body: JSON.stringify(body)
   });
   return res.ok;
@@ -4180,9 +4206,10 @@ async function finPatch(path, body) {
 
 
 async function finPost(table, body) {
+  const token = _finToken || FIN_ANON_KEY;
   const res = await fetch(FIN_URL + '/' + table, {
     method: 'POST',
-    headers: { 'apikey': FIN_KEY, 'Authorization': 'Bearer ' + FIN_KEY,
+    headers: { 'apikey': FIN_ANON_KEY, 'Authorization': 'Bearer ' + token,
       'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
     body: JSON.stringify(body)
   });
@@ -4398,6 +4425,7 @@ async function salvarEntrada() {
     ok = await finPatch('caixa_entradas?id=eq.' + id, body);
   } else {
     body.valor_disponivel = valor;
+    body.user_id = '157fd1cd-382e-4356-b0a0-c30bc9573abb';
     const res = await fetch(FIN_URL + '/caixa_entradas', {
       method: 'POST',
       headers: { 'apikey': FIN_KEY, 'Authorization': 'Bearer ' + FIN_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
@@ -4665,6 +4693,9 @@ function _popularSelectCat(selId, selectedId, tipoSugerido) {
 }
 
 // Integração balancete — incluir caixa nas transações
+
+// Iniciar autenticação financeira
+initFinAuth();
 
 // ─── LANÇAMENTOS EXTERNOS ─────────────────────────────────────────
 let _lancamentos = [];
@@ -4973,7 +5004,7 @@ async function salvarLancamento() {
   const venc   = document.getElementById('lanc-edit-venc').value || null;
   const cliente    = tipo === 'RECEBER' ? cf : null;
   const fornecedor = tipo === 'PAGAR'   ? cf : null;
-  const body = { data, data_vencimento: venc, descricao: descFinal, valor, tipo_lancamento: tipo, meio_pagamento: meio, situacao: sit, categoria_id: catId, observacao: obs, cliente, fornecedor, atualizado_em: new Date().toISOString() };
+  const body = { data, data_vencimento: venc, descricao: descFinal, valor, user_id: '157fd1cd-382e-4356-b0a0-c30bc9573abb', tipo_lancamento: tipo, meio_pagamento: meio, situacao: sit, categoria_id: catId, observacao: obs, cliente, fornecedor, atualizado_em: new Date().toISOString() };
 
   let ok;
   if (id) {
@@ -5101,7 +5132,7 @@ async function salvarNovaCategoria() {
     method: 'POST',
     headers: { 'apikey': FIN_KEY, 'Authorization': `Bearer ${FIN_KEY}`,
       'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-    body: JSON.stringify({ nome, tipo, cor, ativa: true })
+    body: JSON.stringify({ nome, tipo, cor, ativa: true, user_id: '157fd1cd-382e-4356-b0a0-c30bc9573abb' })
   });
   if (res.ok) {
     const nova = await res.json();
