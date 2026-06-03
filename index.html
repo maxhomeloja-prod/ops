@@ -4997,10 +4997,9 @@ async function salvarLancamento() {
   const catId  = document.getElementById('lanc-edit-categoria').value || null;
   const obs    = document.getElementById('lanc-edit-obs').value || null;
 
+  const cf     = document.getElementById('lanc-edit-cf').value.trim() || null;
   const descFinal = desc || cf || (tipo === 'RECEBER' ? 'Recebimento' : 'Pagamento');
   if (!data || !valor || valor <= 0) { toast('Preencha data e valor.', 'error'); return; }
-
-  const cf     = document.getElementById('lanc-edit-cf').value.trim() || null;
   const venc   = document.getElementById('lanc-edit-venc').value || null;
   const cliente    = tipo === 'RECEBER' ? cf : null;
   const fornecedor = tipo === 'PAGAR'   ? cf : null;
